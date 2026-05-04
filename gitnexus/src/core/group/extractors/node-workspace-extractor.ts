@@ -205,6 +205,7 @@ export async function extractNodeWorkspaceLinks(
     };
     const existing = packagesByName.get(manifest.name);
     if (existing) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[node-workspace-extractor] duplicate package name "${manifest.name}" in "${groupPath}" and "${existing.groupPath}" — skipping "${groupPath}"`,
       );

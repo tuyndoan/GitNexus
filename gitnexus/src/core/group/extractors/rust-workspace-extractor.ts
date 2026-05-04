@@ -224,6 +224,7 @@ export async function extractRustWorkspaceLinks(
     };
     const existing = cratesByName.get(manifest.name);
     if (existing) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[rust-workspace-extractor] duplicate crate name "${manifest.name}" in "${groupPath}" and "${existing.groupPath}" — skipping "${groupPath}"`,
       );

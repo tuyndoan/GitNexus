@@ -42,6 +42,7 @@ export const mroPhase: PipelinePhase<MROOutput> = {
     const mroResult = computeMRO(ctx.graph);
 
     if (isDev && mroResult.entries.length > 0) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.log(
         `🔀 MRO: ${mroResult.entries.length} classes analyzed, ${mroResult.ambiguityCount} ambiguities, ${mroResult.overrideEdges} METHOD_OVERRIDES, ${mroResult.methodImplementsEdges} METHOD_IMPLEMENTS`,
       );

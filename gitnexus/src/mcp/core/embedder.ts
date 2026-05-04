@@ -51,6 +51,7 @@ export const initEmbedder = async (): Promise<FeatureExtractionPipeline> => {
       applyHfEnvOverrides(env);
       const embeddingConfig = resolveEmbeddingConfig();
 
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.error('GitNexus: Loading embedding model (first search may take a moment)...');
 
       const devicesToTry: Array<'dml' | 'cuda' | 'cpu'> =
@@ -82,6 +83,7 @@ export const initEmbedder = async (): Promise<FeatureExtractionPipeline> => {
             restoreStdout();
             process.stderr.write = realStderrWrite;
           }
+          // eslint-disable-next-line no-console -- TODO(pino-migration)
           console.error(`GitNexus: Embedding model loaded (${device})`);
           return embedderInstance!;
         } catch {

@@ -175,7 +175,9 @@ const logFailure = (key: string, result: LoadResult): void => {
   logged.add(key);
   const message = `[gitnexus] ${result.note} (${result.error.message})`;
 
+  // eslint-disable-next-line no-console -- TODO(pino-migration)
   if (result.severity === 'error') console.error(message);
+  // eslint-disable-next-line no-console -- TODO(pino-migration)
   else console.warn(message);
 };
 

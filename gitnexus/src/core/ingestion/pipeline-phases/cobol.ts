@@ -47,6 +47,7 @@ export const cobolPhase: PipelinePhase<CobolOutput> = {
     const cobolResult = processCobol(ctx.graph, cobolFiles, allPathSet);
 
     if (isDev) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.log(
         `  COBOL: ${cobolResult.programs} programs, ${cobolResult.paragraphs} paragraphs, ${cobolResult.sections} sections from ${cobolFiles.length} files`,
       );
@@ -55,11 +56,13 @@ export const cobolPhase: PipelinePhase<CobolOutput> = {
         cobolResult.execCicsBlocks > 0 ||
         cobolResult.entryPoints > 0
       ) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log(
           `  COBOL enriched: ${cobolResult.execSqlBlocks} SQL blocks, ${cobolResult.execCicsBlocks} CICS blocks, ${cobolResult.entryPoints} entry points, ${cobolResult.moves} moves, ${cobolResult.fileDeclarations} file declarations`,
         );
       }
       if (cobolResult.jclJobs > 0) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log(`  JCL: ${cobolResult.jclJobs} jobs, ${cobolResult.jclSteps} steps`);
       }
     }

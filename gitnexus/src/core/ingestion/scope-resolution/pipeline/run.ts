@@ -279,6 +279,7 @@ export function runScopeResolution(
   if (PROF) {
     const tEnd = process.hrtime.bigint();
     const ns = (a: bigint, b: bigint): number => Number(b - a) / 1_000_000;
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.warn(
       `[scope-resolution prof] extract=${ns(tStart, tExtract).toFixed(0)}ms` +
         ` finalize=${ns(tExtract, tFinalize).toFixed(0)}ms` +

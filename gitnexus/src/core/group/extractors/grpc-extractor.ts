@@ -344,6 +344,7 @@ export function resolveProtoConflict(
   // services under a fabricated package-qualified contract id.
   if (winners.length !== 1) {
     const paths = candidates.map((c) => c.protoPath).join(', ');
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.warn(
       `[grpc-extractor] Ambiguous proto resolution for service "${serviceName}" from ${sourceFilePath}: ${winners.length} candidates tied at score ${maxScore} among [${paths}] — skipping canonical contract`,
     );

@@ -213,6 +213,7 @@ export async function extractJavaWorkspaceLinks(
     };
     const existing = projectsByKey.get(key);
     if (existing) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[java-workspace-extractor] duplicate artifact "${key}" in "${groupPath}" and "${existing.groupPath}" — skipping "${groupPath}"`,
       );

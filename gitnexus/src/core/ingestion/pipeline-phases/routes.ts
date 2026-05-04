@@ -174,6 +174,7 @@ export const routesPhase: PipelinePhase<RoutesOutput> = {
       }
 
       if (isDev) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log(
           `🗺️ Route registry: ${routeRegistry.size} routes${duplicateRoutes > 0 ? ` (${duplicateRoutes} duplicate URLs skipped)` : ''}`,
         );
@@ -224,6 +225,7 @@ export const routesPhase: PipelinePhase<RoutesOutput> = {
             linkedCount++;
           }
           if (isDev && linkedCount > 0) {
+            // eslint-disable-next-line no-console -- TODO(pino-migration)
             console.log(
               `🛡️ Linked ${mwPath} middleware [${mwLabel.join(', ')}] to ${linkedCount} routes`,
             );
@@ -290,6 +292,7 @@ export const routesPhase: PipelinePhase<RoutesOutput> = {
 
       processNextjsFetchRoutes(ctx.graph, allFetchCalls, routeURLToFile, consumerContents);
       if (isDev) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log(
           `🔗 Processed ${allFetchCalls.length} fetch() calls against ${routeRegistry.size} routes`,
         );

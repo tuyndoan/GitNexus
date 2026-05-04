@@ -1385,6 +1385,7 @@ const processFileGroup = (
     if (parentPort) {
       parentPort.postMessage({ type: 'warning', message });
     } else {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(message);
     }
     return;
@@ -1414,6 +1415,7 @@ const processFileGroup = (
         bufferSize: getTreeSitterBufferSize(parseContent),
       });
     } catch (err) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `Failed to parse file ${file.path}: ${err instanceof Error ? err.message : String(err)}`,
       );
@@ -1427,6 +1429,7 @@ const processFileGroup = (
     try {
       matches = query.matches(tree.rootNode);
     } catch (err) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `Query execution failed for ${file.path}: ${err instanceof Error ? err.message : String(err)}`,
       );
@@ -1447,6 +1450,7 @@ const processFileGroup = (
       file.path,
       (message) => {
         if (parentPort) parentPort.postMessage({ type: 'warning', message });
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         else console.warn(message);
       },
       tree,

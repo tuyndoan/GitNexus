@@ -365,6 +365,7 @@ export const loadIgnoreRules = async (
     } catch (err: unknown) {
       const code = (err as NodeJS.ErrnoException).code;
       if (code !== 'ENOENT') {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.warn(`  Warning: could not read ${filename}: ${(err as Error).message}`);
       }
     }

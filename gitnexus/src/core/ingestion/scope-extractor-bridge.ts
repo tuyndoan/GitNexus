@@ -53,6 +53,7 @@ export function extractParsedFile(
       err instanceof Error ? err.message : String(err)
     }`;
     if (onWarn !== undefined) onWarn(message);
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     else console.warn(message);
     return undefined;
   }

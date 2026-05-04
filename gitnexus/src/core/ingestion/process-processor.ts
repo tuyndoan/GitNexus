@@ -319,12 +319,15 @@ const findEntryPoints = (
 
   // DEBUG: Log top candidates with new scoring details
   if (sorted.length > 0 && isDev) {
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.log(`[Process] Top 10 entry point candidates (new scoring):`);
     sorted.slice(0, 10).forEach((c, i) => {
       const node = graph.getNode(c.id);
       const exported = node?.properties.isExported ? '✓' : '✗';
       const shortPath = node?.properties.filePath?.split('/').slice(-2).join('/') || '';
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.log(`  ${i + 1}. ${node?.properties.name} [exported:${exported}] (${shortPath})`);
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.log(`     score: ${c.score.toFixed(2)} = [${c.reasons.join(' × ')}]`);
     });
   }

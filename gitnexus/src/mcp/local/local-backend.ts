@@ -164,6 +164,7 @@ const confidenceForRelType = (relType: string | undefined): number =>
 /** Structured error logging for query failures — replaces empty catch blocks */
 function logQueryError(context: string, err: unknown): void {
   const msg = err instanceof Error ? err.message : String(err);
+  // eslint-disable-next-line no-console -- TODO(pino-migration)
   console.error(`GitNexus [${context}]: ${msg}`);
 }
 
@@ -184,6 +185,7 @@ function logQueryError(context: string, err: unknown): void {
 function logQueryTiming(query: string, phases: Record<string, number>): void {
   const totalMs = phases.wall ?? Object.values(phases).reduce((a, b) => a + b, 0);
   const truncated = query.length > 80 ? `${query.slice(0, 80)}…` : query;
+  // eslint-disable-next-line no-console -- TODO(pino-migration)
   console.error(
     `GitNexus [query:timing] query=${JSON.stringify(truncated)} totalMs=${totalMs} phases=${JSON.stringify(phases)}`,
   );
@@ -287,6 +289,7 @@ export class LocalBackend {
       // If kuzu exists but lbug doesn't, warn so the user knows to re-analyze.
       const kuzu = await cleanupOldKuzuFiles(storagePath);
       if (kuzu.found && kuzu.needsReindex) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.error(
           `GitNexus: "${entry.name}" has a stale KuzuDB index. Run: gitnexus analyze ${entry.path}`,
         );
@@ -637,6 +640,7 @@ export class LocalBackend {
     }
 
     this.warnedSiblingDrift.add(cacheKey);
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.error(`GitNexus: ${match.hint}`);
   }
 
@@ -990,6 +994,7 @@ export class LocalBackend {
     try {
       bm25Results = await searchFTSFromLbug(query, limit, repo.id);
     } catch (err: any) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.error('GitNexus: BM25/FTS search failed (FTS indexes may not exist) -', err.message);
       return { results: [], ftsUsed: false };
     }
@@ -1114,6 +1119,7 @@ export class LocalBackend {
         // policy. Emitted once per `LocalBackend` instance lifetime to avoid
         // noisy stderr on hot semantic-search paths (DoD §2.8).
         this.warnedVectorUnsupported = true;
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.error(
           'GitNexus [query:vector]: VECTOR extension not supported on this platform; using exact scan fallback',
         );

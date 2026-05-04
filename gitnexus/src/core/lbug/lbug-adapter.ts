@@ -348,6 +348,7 @@ const doInitLbug = async (dbPath: string) => {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (!msg.includes('already exists')) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.warn(`⚠️ Schema creation warning: ${msg.slice(0, 120)}`);
       }
     }
@@ -701,6 +702,7 @@ export const insertNodeToLbug = async (
     return false;
   } catch (e: any) {
     // Node may already exist or other error
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.error(`Failed to insert ${label} node:`, e.message);
     return false;
   }
@@ -1028,6 +1030,7 @@ export const fetchExistingEmbeddingHashes = async (
           const nodeId = r.nodeId ?? r[0];
           if (nodeId) map.set(nodeId, STALE_HASH_SENTINEL);
         }
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log(
           `[embed] ${map.size} nodes in legacy DB (missing chunk-aware columns) — all treated as stale`,
         );
@@ -1035,6 +1038,7 @@ export const fetchExistingEmbeddingHashes = async (
       } catch (fallbackErr: any) {
         const fallbackMsg = fallbackErr?.message ?? '';
         if (isMissingColumnOrTableError(fallbackMsg)) {
+          // eslint-disable-next-line no-console -- TODO(pino-migration)
           console.log(
             `[embed] CodeEmbedding table not yet present — full embedding run (${fallbackMsg})`,
           );

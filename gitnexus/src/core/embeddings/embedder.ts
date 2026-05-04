@@ -166,6 +166,7 @@ export const initEmbedder = async (
 
       const isDev = process.env.NODE_ENV === 'development';
       if (isDev) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log(`🧠 Loading embedding model: ${finalConfig.modelId}`);
       }
 
@@ -192,12 +193,16 @@ export const initEmbedder = async (
       for (const device of devicesToTry) {
         try {
           if (isDev && device === 'dml') {
+            // eslint-disable-next-line no-console -- TODO(pino-migration)
             console.log('🔧 Trying DirectML (DirectX12) GPU backend...');
           } else if (isDev && device === 'cuda') {
+            // eslint-disable-next-line no-console -- TODO(pino-migration)
             console.log('🔧 Trying CUDA GPU backend...');
           } else if (isDev && device === 'cpu') {
+            // eslint-disable-next-line no-console -- TODO(pino-migration)
             console.log('🔧 Using CPU backend...');
           } else if (isDev && device === 'wasm') {
+            // eslint-disable-next-line no-console -- TODO(pino-migration)
             console.log('🔧 Using WASM backend (slower)...');
           }
 
@@ -221,7 +226,9 @@ export const initEmbedder = async (
                 : device === 'cuda'
                   ? 'GPU (CUDA)'
                   : device.toUpperCase();
+            // eslint-disable-next-line no-console -- TODO(pino-migration)
             console.log(`✅ Using ${label} backend`);
+            // eslint-disable-next-line no-console -- TODO(pino-migration)
             console.log('✅ Embedding model loaded successfully');
           }
 
@@ -229,6 +236,7 @@ export const initEmbedder = async (
         } catch (deviceError) {
           if (isDev && (device === 'cuda' || device === 'dml')) {
             const gpuType = device === 'dml' ? 'DirectML' : 'CUDA';
+            // eslint-disable-next-line no-console -- TODO(pino-migration)
             console.log(`⚠️  ${gpuType} not available, falling back to CPU...`);
           }
           // Continue to next device in list

@@ -324,13 +324,21 @@ export const processImports = async (
       matches = query.matches(tree.rootNode);
     } catch (queryError: any) {
       if (isDev) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.group(`🔴 Query Error: ${file.path}`);
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log('Language:', language);
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log('Query (first 200 chars):', queryStr.substring(0, 200) + '...');
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log('Error:', queryError?.message || queryError);
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log('File content (first 300 chars):', file.content.substring(0, 300));
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log('AST root type:', tree.rootNode?.type);
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log('AST has errors:', tree.rootNode?.hasError);
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.groupEnd();
       }
 
@@ -346,6 +354,7 @@ export const processImports = async (
         const sourceNode = captureMap['import.source'];
         if (!sourceNode) {
           if (isDev) {
+            // eslint-disable-next-line no-console -- TODO(pino-migration)
             console.log(`⚠️ Import captured but no source node in ${file.path}`);
           }
           return;
@@ -399,6 +408,7 @@ export const processImports = async (
 
   if (skippedByLang && skippedByLang.size > 0) {
     for (const [lang, count] of skippedByLang.entries()) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[ingestion] Skipped ${count} ${lang} file(s) in import processing — ${lang} parser not available.`,
       );
@@ -406,6 +416,7 @@ export const processImports = async (
   }
 
   if (isDev) {
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.log(
       `📊 Import processing complete: ${getResolvedCount()}/${totalImportsFound} imports resolved to graph edges`,
     );
@@ -498,6 +509,7 @@ export const processImportsFromExtracted = async (
   );
 
   if (isDev) {
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.log(
       `📊 Import processing (fast path): ${getResolvedCount()}/${totalImportsFound} imports resolved to graph edges`,
     );

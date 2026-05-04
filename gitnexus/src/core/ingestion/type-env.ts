@@ -769,6 +769,7 @@ const resolveFixpointBindings = (
     if (iter === MAX_FIXPOINT_ITERATIONS - 1 && process.env.GITNEXUS_DEBUG) {
       const unresolved = pendingItems.length - resolved.size;
       if (unresolved > 0) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.warn(
           `[type-env] fixpoint hit iteration cap (${MAX_FIXPOINT_ITERATIONS}), ${unresolved} items unresolved`,
         );

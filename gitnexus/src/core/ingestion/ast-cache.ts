@@ -49,6 +49,7 @@ export const createASTCache = (maxSize: number = 50): ASTCache => {
         // will hand freed memory to scope-resolution.
         (tree as unknown as { delete?: () => void }).delete?.();
       } catch (e) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.warn('Failed to delete tree from WASM memory', e);
       }
     },

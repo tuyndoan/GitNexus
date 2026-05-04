@@ -784,6 +784,7 @@ export const processCalls = async (
       const query = new Parser.Query(lang, queryStr);
       matches = query.matches(tree.rootNode);
     } catch (queryError) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(`Query error for ${file.path}:`, queryError);
       continue;
     }
@@ -1391,6 +1392,7 @@ export const processCalls = async (
 
   if (skippedByLang && skippedByLang.size > 0) {
     for (const [lang, count] of skippedByLang.entries()) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[ingestion] Skipped ${count} ${lang} file(s) in call processing — ${lang} parser not available.`,
       );

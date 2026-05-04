@@ -74,9 +74,11 @@ export const walkRepositoryPaths = async (
   if (skippedLarge > 0) {
     const isDefault = maxFileSizeBytes === DEFAULT_MAX_FILE_SIZE_BYTES;
     const suffix = isDefault ? ', likely generated/vendored' : '';
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.warn(`  Skipped ${skippedLarge} large files (>${maxFileSizeBytes / 1024}KB${suffix})`);
     if (isVerboseIngestionEnabled()) {
       for (const p of skippedLargePaths) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.warn(`  - ${p}`);
       }
     }

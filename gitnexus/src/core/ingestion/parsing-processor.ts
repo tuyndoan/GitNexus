@@ -191,6 +191,7 @@ const processParsingWithWorkers = async (
     const summary = Array.from(skippedLanguages.entries())
       .map(([lang, count]) => `${lang}: ${count}`)
       .join(', ');
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.warn(`  Skipped unsupported languages: ${summary}`);
   }
 
@@ -382,6 +383,7 @@ const processParsingSequential = async (
         bufferSize: getTreeSitterBufferSize(parseContent),
       });
     } catch (parseError) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(`Skipping unparseable file: ${file.path}`);
       continue;
     }
@@ -408,6 +410,7 @@ const processParsingSequential = async (
       query = new Parser.Query(language, queryString);
       matches = query.matches(tree.rootNode);
     } catch (queryError) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(`Query error for ${file.path}:`, queryError);
       continue;
     }
@@ -701,6 +704,7 @@ const processParsingSequential = async (
 
   if (skippedByLang && skippedByLang.size > 0) {
     for (const [lang, count] of skippedByLang.entries()) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[ingestion] Skipped ${count} ${lang} file(s) in parsing processing — ${lang} parser not available.`,
       );
@@ -742,6 +746,7 @@ export const processParsing = async (
       // in scope-resolution with an empty cache and get re-parsed.
       // Surfacing this in PROF mode prevents silent perf cliffs when
       // a repo crosses the worker-pool threshold.
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[scope-resolution prof] worker pool engaged for ${files.length} files — cross-phase tree cache will be empty; scope-resolution re-parses.`,
       );
@@ -757,6 +762,7 @@ export const processParsing = async (
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn('Worker pool parsing stopped; continuing with sequential parser:', message);
       reportProgress?.(
         lastProgress,

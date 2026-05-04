@@ -258,6 +258,7 @@ export const createWorkerPool = (
             splitDepth: job.splitDepth + 1,
             timeoutMs: nextTimeout,
           };
+          // eslint-disable-next-line no-console -- TODO(pino-migration)
           console.warn(
             `Worker ${workerIndex} parse job idle timeout after ${job.timeoutMs / 1000}s ` +
               `(${job.items.length} items, ${job.estimatedBytes} bytes, last progress: ${lastProgress}). ` +
@@ -271,6 +272,7 @@ export const createWorkerPool = (
 
         const nextAttempt = job.attempt + 1;
         if (nextAttempt <= poolOptions.maxTimeoutRetries) {
+          // eslint-disable-next-line no-console -- TODO(pino-migration)
           console.warn(
             `Worker ${workerIndex} parse job idle timeout after ${job.timeoutMs / 1000}s ` +
               `(single item, attempt ${nextAttempt}/${poolOptions.maxTimeoutRetries + 1}). ` +
@@ -365,6 +367,7 @@ export const createWorkerPool = (
             reportProgress();
           } else if (msg.type === 'warning') {
             resetIdleTimer();
+            // eslint-disable-next-line no-console -- TODO(pino-migration)
             console.warn(msg.message);
           } else if (msg.type === 'sub-batch-done') {
             waitingForFlush = true;

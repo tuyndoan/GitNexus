@@ -128,6 +128,7 @@ export const enrichClusters = async (
       enrichments.set(community.id, enrichment);
     } catch (error) {
       // On error, fallback to heuristic
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(`Failed to enrich cluster ${community.id}:`, error);
       enrichments.set(community.id, {
         name: community.heuristicLabel,
@@ -210,6 +211,7 @@ Output JSON array:
         }
       }
     } catch (error) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn('Batch enrichment failed, falling back to heuristics:', error);
       // Fallback for this batch
       for (const community of batch) {

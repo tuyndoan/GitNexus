@@ -176,6 +176,7 @@ export async function runPipeline(
     const start = Date.now();
 
     if (isDev) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.log(`▶ Phase: ${phase.name}`);
     }
 
@@ -220,6 +221,7 @@ export async function runPipeline(
     });
 
     if (isDev) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.log(`✓ Phase: ${phase.name} (${durationMs}ms)`);
     }
   }

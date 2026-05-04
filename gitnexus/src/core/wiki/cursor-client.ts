@@ -21,6 +21,7 @@ function isVerbose(): boolean {
 
 function verboseLog(...args: unknown[]): void {
   if (isVerbose()) {
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.log('[cursor-cli]', ...args);
   }
 }

@@ -211,6 +211,7 @@ export async function extractGoWorkspaceLinks(
     };
     const existing = modulesByPath.get(manifest.modulePath);
     if (existing) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[go-workspace-extractor] duplicate module "${manifest.modulePath}" in "${groupPath}" and "${existing.groupPath}" — skipping "${groupPath}"`,
       );

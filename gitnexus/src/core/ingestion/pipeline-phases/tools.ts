@@ -104,6 +104,7 @@ export const toolsPhase: PipelinePhase<ToolsOutput> = {
       }
 
       if (isDev) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log(`🔧 Tool registry: ${toolDefs.length} tools detected`);
       }
     }

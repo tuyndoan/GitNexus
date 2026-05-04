@@ -204,6 +204,7 @@ export async function extractPythonWorkspaceLinks(
     };
     const existing = packagesByImportName.get(manifest.importName);
     if (existing) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[python-workspace-extractor] duplicate package "${manifest.name}" in "${groupPath}" and "${existing.groupPath}" — skipping "${groupPath}"`,
       );

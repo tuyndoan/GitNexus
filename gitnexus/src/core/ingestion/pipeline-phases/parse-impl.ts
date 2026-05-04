@@ -136,6 +136,7 @@ export async function runChunkedParseAndResolve(
     }
   }
   for (const [lang, count] of skippedByLang) {
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.warn(
       `Skipping ${count} ${lang} file(s) — ${lang} parser not available (native binding may not have built). Try: npm rebuild tree-sitter-${lang}`,
     );
@@ -171,6 +172,7 @@ export async function runChunkedParseAndResolve(
 
   if (isDev) {
     const totalMB = parseableScanned.reduce((s, f) => s + f.size, 0) / (1024 * 1024);
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.log(
       `📂 Scan: ${totalFiles} paths, ${totalParseable} parseable (${totalMB.toFixed(0)}MB), ${numChunks} chunks @ ${CHUNK_BYTE_BUDGET / (1024 * 1024)}MB budget`,
     );
@@ -220,6 +222,7 @@ export async function runChunkedParseAndResolve(
       }
       workerPool = createWorkerPool(workerUrl);
     } catch (err) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         'Worker pool creation failed, using sequential fallback:',
         (err as Error).message,
@@ -339,6 +342,7 @@ export async function runChunkedParseAndResolve(
             exportedTypeMap,
           );
           if (isDev && enrichedCount > 0) {
+            // eslint-disable-next-line no-console -- TODO(pino-migration)
             console.log(
               `🔗 E1: Seeded ${enrichedCount} cross-file receiver types (chunk ${chunkIdx + 1})`,
             );
@@ -538,6 +542,7 @@ export async function runChunkedParseAndResolve(
       const rcStats = ctx.getStats();
       const total = rcStats.cacheHits + rcStats.cacheMisses;
       const hitRate = total > 0 ? ((rcStats.cacheHits / total) * 100).toFixed(1) : '0';
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.log(
         `🔍 Resolution cache: ${rcStats.cacheHits} hits, ${rcStats.cacheMisses} misses (${hitRate}% hit rate)`,
       );
@@ -554,12 +559,14 @@ export async function runChunkedParseAndResolve(
       bindingAccumulator.finalize();
       const enriched = enrichExportedTypeMap(bindingAccumulator, graph, exportedTypeMap);
       if (isDev && enriched > 0) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log(
           `🔗 Worker TypeEnv enrichment: ${enriched} fixpoint-inferred exports added to ExportedTypeMap`,
         );
       }
     } catch (enrichErr) {
       if (isDev) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.warn(
           'Post-fallback finalize/enrich failed during cleanup:',
           (enrichErr as Error).message,
@@ -571,6 +578,7 @@ export async function runChunkedParseAndResolve(
   if (!hasSynthesized) {
     const synthesized = synthesizeWildcardImportBindings(graph, ctx);
     if (isDev && synthesized > 0) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.log(
         `🔗 Synthesized ${synthesized} additional wildcard import bindings (Go/Ruby/C++/Swift/Python)`,
       );

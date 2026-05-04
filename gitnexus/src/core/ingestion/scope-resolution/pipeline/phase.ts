@@ -144,6 +144,7 @@ export const scopeResolutionPhase: PipelinePhase<ScopeResolutionOutput> = {
           resolutionConfig,
           onWarn: (msg) => {
             if (isSemanticModelValidatorEnabled()) {
+              // eslint-disable-next-line no-console -- TODO(pino-migration)
               console.warn(`[scope-resolution:${lang}] ${msg}`);
             }
           },
@@ -162,6 +163,7 @@ export const scopeResolutionPhase: PipelinePhase<ScopeResolutionOutput> = {
       });
 
       if (isDev) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log(
           `[scope-resolution:${lang}] ${stats.filesProcessed} files → ${stats.importsEmitted} IMPORTS + ${stats.referenceEdgesEmitted} reference edges (${stats.resolve.unresolved} unresolved sites, ${stats.referenceSkipped} skipped)`,
         );

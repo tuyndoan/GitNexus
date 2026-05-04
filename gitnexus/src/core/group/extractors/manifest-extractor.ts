@@ -298,6 +298,7 @@ export class ManifestExtractor {
       // fail the whole manifest extraction. Unresolved contracts still
       // get a synthetic symbolUid below, so cross-impact can proceed.
       const message = err instanceof Error ? err.message : String(err);
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[manifest-extractor] resolveSymbol failed for ${link.type}:${link.contract} ` +
           `in ${repoPathKey}: ${message}`,

@@ -59,10 +59,12 @@ export const crossFilePhase: PipelinePhase<CrossFileOutput> = {
       if (isDev) {
         if (bindingAccumulator.totalBindings > 0) {
           const memKB = Math.round(bindingAccumulator.estimateMemoryBytes() / 1024);
+          // eslint-disable-next-line no-console -- TODO(pino-migration)
           console.log(
             `📦 BindingAccumulator: ${bindingAccumulator.totalBindings} bindings across ${bindingAccumulator.fileCount} files (~${memKB} KB)`,
           );
         } else if (totalFiles > 0) {
+          // eslint-disable-next-line no-console -- TODO(pino-migration)
           console.log(
             `📦 BindingAccumulator: EMPTY — 0 bindings across 0 files despite ${totalFiles} parsed files. If the codebase has typed bindings, this indicates an upstream regression.`,
           );

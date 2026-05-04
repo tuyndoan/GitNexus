@@ -11,6 +11,7 @@ const warned = new Set<string>();
 const warnOnce = (key: string, message: string): void => {
   if (warned.has(key)) return;
   warned.add(key);
+  // eslint-disable-next-line no-console -- TODO(pino-migration)
   console.warn(message);
 };
 

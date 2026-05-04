@@ -47,6 +47,7 @@ export const communitiesPhase: PipelinePhase<CommunitiesOutput> = {
     });
 
     if (isDev) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.log(
         `🏘️ Community detection: ${communityResult.stats.totalCommunities} communities found (modularity: ${communityResult.stats.modularity.toFixed(3)})`,
       );

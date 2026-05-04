@@ -67,6 +67,7 @@ export const processesPhase: PipelinePhase<ProcessesOutput> = {
     );
 
     if (isDev) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.log(
         `🔄 Process detection: ${processResult.stats.totalProcesses} processes found (${processResult.stats.crossCommunityCount} cross-community)`,
       );
@@ -167,6 +168,7 @@ export const processesPhase: PipelinePhase<ProcessesOutput> = {
         }
       }
       if (isDev && linked > 0) {
+        // eslint-disable-next-line no-console -- TODO(pino-migration)
         console.log(`🔗 Linked ${linked} Route/Tool nodes to execution flows`);
       }
     }

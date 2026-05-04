@@ -202,6 +202,7 @@ export async function extractElixirWorkspaceLinks(
     };
     const existing = appsByName.get(manifest.appName);
     if (existing) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[elixir-workspace-extractor] duplicate app "${manifest.appName}" in "${groupPath}" and "${existing.groupPath}" — skipping "${groupPath}"`,
       );

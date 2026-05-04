@@ -188,6 +188,7 @@ export class ExtensionManager {
     const policy = opts.policy ?? this.options.policy ?? resolvePolicyFromEnv();
     const timeoutMs =
       opts.installTimeoutMs ?? this.options.installTimeoutMs ?? getExtensionInstallTimeoutMs();
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     const warn = this.options.warn ?? console.warn;
 
     if (policy === 'never') {

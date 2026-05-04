@@ -91,6 +91,7 @@ function processORMQueries(
   }
 
   if (isDev) {
+    // eslint-disable-next-line no-console -- TODO(pino-migration)
     console.log(
       `ORM dataflow: ${edgesCreated} QUERIES edges, ${modelNodes.size} models (${queries.length} total calls)`,
     );

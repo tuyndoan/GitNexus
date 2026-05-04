@@ -237,6 +237,7 @@ export const processHeritage = async (
       query = new Parser.Query(treeSitterLang, queryStr);
       matches = query.matches(tree.rootNode);
     } catch (queryError) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(`Heritage query error for ${file.path}:`, queryError);
       continue;
     }
@@ -267,6 +268,7 @@ export const processHeritage = async (
 
   if (skippedByLang && skippedByLang.size > 0) {
     for (const [lang, count] of skippedByLang.entries()) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.warn(
         `[ingestion] Skipped ${count} ${lang} file(s) in heritage processing — ${lang} parser not available.`,
       );

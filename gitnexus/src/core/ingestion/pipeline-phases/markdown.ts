@@ -48,6 +48,7 @@ export const markdownPhase: PipelinePhase<MarkdownOutput> = {
     const mdResult = processMarkdown(ctx.graph, mdFiles, allPathSet);
 
     if (isDev) {
+      // eslint-disable-next-line no-console -- TODO(pino-migration)
       console.log(
         `  Markdown: ${mdResult.sections} sections, ${mdResult.links} cross-links from ${mdFiles.length} files`,
       );
