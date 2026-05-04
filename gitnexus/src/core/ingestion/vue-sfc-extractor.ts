@@ -23,7 +23,12 @@ interface ScriptBlock {
   lang: string;
 }
 
-const SCRIPT_RE = /<script(\s[^>]*)?>([^]*?)<\/script>/g;
+// Allow whitespace before the closing `>` in `</script>` (CodeQL
+// js/bad-tag-filter). Browsers and Vue's SFC parser accept `</script >`,
+// so a strict `<\/script>` match would miss valid SFC content and could
+// be exploited by a crafted input that hides a script close from this
+// extractor while remaining valid to the runtime parser.
+const SCRIPT_RE = /<script(\s[^>]*)?>([^]*?)<\/script\s*>/g;
 const TEMPLATE_COMPONENT_RE = /<([A-Z][A-Za-z0-9]+)/g;
 // Greedy: matches from the first <template> to the *last* </template>.
 // This is intentional — nested <template v-slot:...> tags are valid Vue

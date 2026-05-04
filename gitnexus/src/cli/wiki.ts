@@ -610,10 +610,22 @@ function publishGist(htmlPath: string): { url: string; rawUrl: string } | null {
     ).trim();
 
     // gh gist create prints the gist URL as the last line
+    // Find the line that's a parseable URL whose hostname is gist.github.com
+    // — avoids the substring-bypass class CodeQL js/incomplete-url-substring-
+    // sanitization flags (e.g. `https://evil.com/?u=gist.github.com` would
+    // pass `.includes('gist.github.com')` but isn't actually a Gist URL).
     const lines = output.split('\n');
-    const gistUrl = lines.find((l) => l.includes('gist.github.com')) || lines[lines.length - 1];
+    const isGistUrl = (line: string): boolean => {
+      const trimmed = line.trim();
+      try {
+        return new URL(trimmed).hostname === 'gist.github.com';
+      } catch {
+        return false;
+      }
+    };
+    const gistUrl = lines.find(isGistUrl) || lines[lines.length - 1];
 
-    if (!gistUrl || !gistUrl.includes('gist.github.com')) return null;
+    if (!gistUrl || !isGistUrl(gistUrl)) return null;
 
     // Build a raw viewer URL via gist.githack.com
     // gist URL format: https://gist.github.com/{user}/{id}
