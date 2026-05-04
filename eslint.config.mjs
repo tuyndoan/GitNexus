@@ -59,11 +59,30 @@ export default [
     },
   },
 
-  // CLI package — allow console.log (it's a CLI tool)
+  // CLI/server packages — allow console.log (CLI stdout is contract; HTTP server uses console for request logs)
   {
     files: ['gitnexus/src/cli/**/*.ts', 'gitnexus/src/server/**/*.ts'],
     rules: {
       'no-console': 'off',
+    },
+  },
+
+  // Forcing function for the pino migration: warn on any new `console.*` in
+  // core source. Existing call sites carry an eslint-disable-next-line comment
+  // tagged `TODO(pino-migration)` so a `git grep` inventories what's left.
+  // Tests, bin scripts, and the logger module itself are exempt.
+  // CLI/server are exempt above (legitimate stdout output).
+  // Severity is `warn` (not `error`) for the baseline; future PRs can flip to
+  // `error` once the migration sweep lands.
+  {
+    files: ['gitnexus/src/**/*.ts'],
+    ignores: [
+      'gitnexus/src/cli/**',
+      'gitnexus/src/server/**',
+      'gitnexus/src/core/logger.ts',
+    ],
+    rules: {
+      'no-console': 'warn',
     },
   },
 
