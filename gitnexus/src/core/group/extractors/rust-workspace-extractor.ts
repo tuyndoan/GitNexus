@@ -49,8 +49,26 @@ async function parseCrateManifest(
   let name = '';
   const workspaceDeps: string[] = [];
 
-  const nameMatch = content.match(/^\[package\]\s*\n(?:[^\[]*?\n)*?name\s*=\s*"([^"]+)"/m);
-  if (nameMatch) name = nameMatch[1];
+  // Linear-time package-name lookup. The previous regex
+  // `^\[package\]\s*\n(?:[^\[]*?\n)*?name\s*=\s*"([^"]+)"`
+  // had a nested lazy quantifier on `\n` that CodeQL js/redos flagged
+  // as exponential on inputs like `[package]\n` + many bare `\n`. We now
+  // walk the lines explicitly: scan from the first `[package]` header
+  // until we hit the next `[...]` section header, looking for the
+  // `name = "..."` line. O(n) with the line count.
+  const lines = content.split('\n');
+  const packageStart = lines.findIndex((l) => l.trim() === '[package]');
+  if (packageStart >= 0) {
+    for (let i = packageStart + 1; i < lines.length; i++) {
+      const line = lines[i].trimStart();
+      if (line.startsWith('[')) break; // hit the next section header
+      const m = /^name\s*=\s*"([^"]+)"/.exec(line);
+      if (m) {
+        name = m[1];
+        break;
+      }
+    }
+  }
 
   // Match dependencies that use workspace = true, which indicates they
   // are workspace-internal deps:

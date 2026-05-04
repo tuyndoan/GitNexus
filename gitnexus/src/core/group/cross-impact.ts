@@ -185,18 +185,35 @@ async function resolveGroupRepo(
   }
 }
 
+/**
+ * Clamp the impact timeout to a sane bounded range. Callers can feed this
+ * via tool params, so an unclamped value lets a single request hold a
+ * timer slot for an arbitrarily long duration (CodeQL js/resource-
+ * exhaustion). 100ms lower bound preserves test-suite scenarios that
+ * exercise tight timeouts; 5min upper bound is well above any legitimate
+ * single-impact compute.
+ */
+const IMPACT_TIMEOUT_MIN_MS = 100;
+const IMPACT_TIMEOUT_MAX_MS = 5 * 60 * 1_000;
+
+function clampTimeout(timeoutMs: number): number {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return IMPACT_TIMEOUT_MIN_MS;
+  return Math.min(IMPACT_TIMEOUT_MAX_MS, Math.max(IMPACT_TIMEOUT_MIN_MS, Math.trunc(timeoutMs)));
+}
+
 async function safeLocalImpact(
   port: GroupToolPort,
   repo: GroupRepoHandle,
   impactParams: Parameters<GroupToolPort['impact']>[1],
   timeoutMs: number,
 ): Promise<{ value: unknown; timedOut: boolean }> {
+  const safeTimeoutMs = clampTimeout(timeoutMs);
   let timer: ReturnType<typeof setTimeout> | undefined;
   const impactP = port.impact(repo, impactParams).catch((err) => ({
     error: err instanceof Error ? err.message : String(err),
   }));
   const timeoutP = new Promise<'timeout'>((resolve) => {
-    timer = setTimeout(() => resolve('timeout'), timeoutMs);
+    timer = setTimeout(() => resolve('timeout'), safeTimeoutMs);
   });
   const won = await Promise.race([
     impactP.then((v) => ({ tag: 'impact' as const, v })),
