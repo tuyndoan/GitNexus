@@ -24,6 +24,7 @@ import { getGitRoot, hasGitDir } from '../storage/git.js';
 import { runFullAnalysis } from '../core/run-analyze.js';
 import { getMaxFileSizeBannerMessage } from '../core/ingestion/utils/max-file-size.js';
 import fs from 'fs/promises';
+import { logger } from '../core/logger.js';
 
 // Capture stderr.write at module load BEFORE anything (LadybugDB native
 // init, progress bar, console redirection) can monkey-patch it. The
@@ -158,7 +159,7 @@ export const analyzeCommand = async (inputPath?: string, options?: AnalyzeOption
   if (options?.workerTimeout) {
     const workerTimeoutSeconds = Number(options.workerTimeout);
     if (!Number.isFinite(workerTimeoutSeconds) || workerTimeoutSeconds < 1) {
-      console.error('  --worker-timeout must be at least 1 second.\n');
+      logger.error('  --worker-timeout must be at least 1 second.\n');
       process.exitCode = 1;
       return;
     }
@@ -175,7 +176,7 @@ export const analyzeCommand = async (inputPath?: string, options?: AnalyzeOption
     if (value === undefined) return true;
     const parsed = Number(value);
     if (!Number.isInteger(parsed) || parsed <= 0) {
-      console.error(`  ${optionName} must be a positive integer.\n`);
+      logger.error(`  ${optionName} must be a positive integer.\n`);
       process.exitCode = 1;
       return false;
     }
@@ -206,7 +207,7 @@ export const analyzeCommand = async (inputPath?: string, options?: AnalyzeOption
   if (options?.embeddingDevice) {
     const allowed = new Set(['auto', 'cpu', 'dml', 'cuda', 'wasm']);
     if (!allowed.has(options.embeddingDevice)) {
-      console.error('  --embedding-device must be one of: auto, cpu, dml, cuda, wasm.\n');
+      logger.error('  --embedding-device must be one of: auto, cpu, dml, cuda, wasm.\n');
       process.exitCode = 1;
       return;
     }
@@ -291,9 +292,15 @@ export const analyzeCommand = async (inputPath?: string, options?: AnalyzeOption
   };
   process.on('SIGINT', sigintHandler);
 
-  // Route console output through bar.log() to prevent progress bar corruption
+  // Route console output through bar.log() to prevent progress bar corruption.
+  // This is a deliberate UI pattern (not a logging concern): analyze runs a
+  // long-lived progress bar on stdout; any concurrent console.* write would
+  // overwrite the bar mid-render. We capture originals, swap to barLog for
+  // the lifetime of the run, and restore on completion/error/SIGINT.
   const origLog = console.log.bind(console);
+  // eslint-disable-next-line no-console -- intentional console-routing for progress bar UX
   const origWarn = console.warn.bind(console);
+  // eslint-disable-next-line no-console -- intentional console-routing for progress bar UX
   const origError = console.error.bind(console);
   let barCurrentValue = 0;
   const barLog = (...args: any[]) => {
@@ -302,7 +309,9 @@ export const analyzeCommand = async (inputPath?: string, options?: AnalyzeOption
     bar.update(barCurrentValue);
   };
   console.log = barLog;
+  // eslint-disable-next-line no-console -- intentional console-routing for progress bar UX
   console.warn = barLog;
+  // eslint-disable-next-line no-console -- intentional console-routing for progress bar UX
   console.error = barLog;
 
   // Track elapsed time per phase
@@ -367,7 +376,9 @@ export const analyzeCommand = async (inputPath?: string, options?: AnalyzeOption
       clearInterval(elapsedTimer);
       process.removeListener('SIGINT', sigintHandler);
       console.log = origLog;
+      // eslint-disable-next-line no-console -- restoring after intentional progress-bar routing
       console.warn = origWarn;
+      // eslint-disable-next-line no-console -- restoring after intentional progress-bar routing
       console.error = origError;
       bar.stop();
       console.log('  Already up to date\n');
@@ -440,7 +451,9 @@ export const analyzeCommand = async (inputPath?: string, options?: AnalyzeOption
     process.removeListener('SIGINT', sigintHandler);
 
     console.log = origLog;
+    // eslint-disable-next-line no-console -- restoring after intentional progress-bar routing
     console.warn = origWarn;
+    // eslint-disable-next-line no-console -- restoring after intentional progress-bar routing
     console.error = origError;
 
     bar.update(100, { phase: 'Done' });
@@ -465,7 +478,9 @@ export const analyzeCommand = async (inputPath?: string, options?: AnalyzeOption
     clearInterval(elapsedTimer);
     process.removeListener('SIGINT', sigintHandler);
     console.log = origLog;
+    // eslint-disable-next-line no-console -- restoring after intentional progress-bar routing
     console.warn = origWarn;
+    // eslint-disable-next-line no-console -- restoring after intentional progress-bar routing
     console.error = origError;
     bar.stop();
 
@@ -474,14 +489,14 @@ export const analyzeCommand = async (inputPath?: string, options?: AnalyzeOption
     // Registry name-collision from --name (#829) — surface as an
     // actionable error rather than a generic stack-trace.
     if (err instanceof RegistryNameCollisionError) {
-      console.error(`\n  Registry name collision:\n`);
-      console.error(`    "${err.registryName}" is already used by "${err.existingPath}".\n`);
-      console.error(`  Options:`);
-      console.error(`    • Pick a different alias:  gitnexus analyze --name <alias>`);
-      console.error(
+      logger.error(`\n  Registry name collision:\n`);
+      logger.error(`    "${err.registryName}" is already used by "${err.existingPath}".\n`);
+      logger.error(`  Options:`);
+      logger.error(`    • Pick a different alias:  gitnexus analyze --name <alias>`);
+      logger.error(
         `    • Allow the duplicate:     gitnexus analyze --allow-duplicate-name  (leaves "-r ${err.registryName}" ambiguous)`,
       );
-      console.error('');
+      logger.error('');
       process.exitCode = 1;
       return;
     }
@@ -521,34 +536,34 @@ export const analyzeCommand = async (inputPath?: string, options?: AnalyzeOption
       msg.includes('heap out of memory') ||
       msg.includes('JavaScript heap')
     ) {
-      console.error('  This error typically occurs on very large repositories.');
-      console.error('  Suggestions:');
-      console.error('    1. Add large vendored/generated directories to .gitnexusignore');
-      console.error('    2. Increase Node.js heap: NODE_OPTIONS="--max-old-space-size=16384"');
-      console.error('    3. Increase stack size: NODE_OPTIONS="--stack-size=4096"');
-      console.error('');
+      logger.error('  This error typically occurs on very large repositories.');
+      logger.error('  Suggestions:');
+      logger.error('    1. Add large vendored/generated directories to .gitnexusignore');
+      logger.error('    2. Increase Node.js heap: NODE_OPTIONS="--max-old-space-size=16384"');
+      logger.error('    3. Increase stack size: NODE_OPTIONS="--stack-size=4096"');
+      logger.error('');
     } else if (msg.includes('ERESOLVE') || msg.includes('Could not resolve dependency')) {
       // Note: the original arborist "Cannot destructure property 'package' of
       // 'node.target'" crash happens inside npm *before* gitnexus code runs,
       // so it can't be caught here.  This branch handles dependency-resolution
       // errors that surface at runtime (e.g. dynamic require failures).
-      console.error('  This looks like an npm dependency resolution issue.');
-      console.error('  Suggestions:');
-      console.error('    1. Clear the npm cache:    npm cache clean --force');
-      console.error('    2. Update npm:             npm install -g npm@latest');
-      console.error('    3. Reinstall gitnexus:     npm install -g gitnexus@latest');
-      console.error('    4. Or try npx directly:    npx gitnexus@latest analyze');
-      console.error('');
+      logger.error('  This looks like an npm dependency resolution issue.');
+      logger.error('  Suggestions:');
+      logger.error('    1. Clear the npm cache:    npm cache clean --force');
+      logger.error('    2. Update npm:             npm install -g npm@latest');
+      logger.error('    3. Reinstall gitnexus:     npm install -g gitnexus@latest');
+      logger.error('    4. Or try npx directly:    npx gitnexus@latest analyze');
+      logger.error('');
     } else if (
       msg.includes('MODULE_NOT_FOUND') ||
       msg.includes('Cannot find module') ||
       msg.includes('ERR_MODULE_NOT_FOUND')
     ) {
-      console.error('  A required module could not be loaded. The installation may be corrupt.');
-      console.error('  Suggestions:');
-      console.error('    1. Reinstall:   npm install -g gitnexus@latest');
-      console.error('    2. Clear cache: npm cache clean --force && npx gitnexus@latest analyze');
-      console.error('');
+      logger.error('  A required module could not be loaded. The installation may be corrupt.');
+      logger.error('  Suggestions:');
+      logger.error('    1. Reinstall:   npm install -g gitnexus@latest');
+      logger.error('    2. Clear cache: npm cache clean --force && npx gitnexus@latest analyze');
+      logger.error('');
     }
 
     process.exitCode = 1;

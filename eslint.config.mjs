@@ -59,11 +59,14 @@ export default [
     },
   },
 
-  // CLI/server packages — allow console.log (CLI stdout is contract; HTTP server uses console for request logs)
+  // CLI/server packages — `console.log` IS the contract (CLI tool data output
+  // on stdout, e.g. `gitnexus query | jq`; server pretty-printed banners).
+  // Diagnostic logging (`warn`/`error`/`debug`/`info`) goes through pino like
+  // the rest of the codebase.
   {
     files: ['gitnexus/src/cli/**/*.ts', 'gitnexus/src/server/**/*.ts'],
     rules: {
-      'no-console': 'off',
+      'no-console': ['error', { allow: ['log'] }],
     },
   },
 

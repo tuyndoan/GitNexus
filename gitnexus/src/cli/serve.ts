@@ -1,14 +1,15 @@
 import { createServer } from '../server/api.js';
+import { logger } from '../core/logger.js';
 
 // Catch anything that would cause a silent exit
 process.on('uncaughtException', (err) => {
-  console.error('\n[gitnexus serve] Uncaught exception:', err.message);
-  if (process.env.DEBUG) console.error(err.stack);
+  logger.error({ err: err.message }, '\n[gitnexus serve] Uncaught exception:');
+  if (process.env.DEBUG) logger.error(err.stack);
   process.exit(1);
 });
 process.on('unhandledRejection', (reason: any) => {
-  console.error('\n[gitnexus serve] Unhandled rejection:', reason?.message || reason);
-  if (process.env.DEBUG) console.error(reason?.stack);
+  logger.error({ err: reason?.message || reason }, '\n[gitnexus serve] Unhandled rejection:');
+  if (process.env.DEBUG) logger.error(reason?.stack);
   process.exit(1);
 });
 
@@ -22,15 +23,15 @@ export const serveCommand = async (options?: { port?: string; host?: string }) =
   try {
     await createServer(port, host);
   } catch (err: any) {
-    console.error(`\nFailed to start GitNexus server:\n`);
-    console.error(`  ${err.message || err}\n`);
+    logger.error(`\nFailed to start GitNexus server:\n`);
+    logger.error(`  ${err.message || err}\n`);
     if (err.code === 'EADDRINUSE') {
-      console.error(`  Port ${port} is already in use. Either:`);
-      console.error(`    1. Stop the other process using port ${port}`);
-      console.error(`    2. Use a different port: gitnexus serve --port 4748\n`);
+      logger.error(`  Port ${port} is already in use. Either:`);
+      logger.error(`    1. Stop the other process using port ${port}`);
+      logger.error(`    2. Use a different port: gitnexus serve --port 4748\n`);
     }
     if (err.stack && process.env.DEBUG) {
-      console.error(err.stack);
+      logger.error(err.stack);
     }
     process.exit(1);
   }

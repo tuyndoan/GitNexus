@@ -26,8 +26,6 @@ import { isWriteQuery } from '../core/lbug/pool-adapter.js';
 import { NODE_TABLES, type GraphNode, type GraphRelationship } from 'gitnexus-shared';
 import { searchFTSFromLbug } from '../core/search/bm25-index.js';
 import { hybridSearch } from '../core/search/hybrid-search.js';
-// Embedding imports are lazy (dynamic import) to avoid loading onnxruntime-node
-// at server startup — crashes on unsupported Node ABI versions (#89)
 import { LocalBackend } from '../mcp/local/local-backend.js';
 import { mountMCPEndpoints } from './mcp-http.js';
 import { fork } from 'child_process';
@@ -35,6 +33,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import { JobManager } from './analyze-job.js';
 import { assertString, escapeRegExp, BadRequestError, createRouteLimiter } from './validation.js';
 import { extractRepoName, getCloneDir, cloneOrPull } from './git-clone.js';
+import { logger } from '../core/logger.js';
 
 const _require = createRequire(import.meta.url);
 const pkg = _require('../../package.json');
@@ -142,7 +141,7 @@ export const resolveWebDistDir = async (
       return dir;
     } catch (err: any) {
       if (err?.code !== 'ENOENT') {
-        console.warn(`[serve] could not access web UI dir ${dir}:`, err.message);
+        logger.warn({ err: err.message }, `[serve] could not access web UI dir ${dir}:`);
       }
     }
   }
@@ -1481,7 +1480,7 @@ export const createServer = async (port: number, host: string = '127.0.0.1') => 
                     });
                   })
                   .catch((err) => {
-                    console.error('backend.init() failed after analyze:', err);
+                    logger.error({ err }, 'backend.init() failed after analyze:');
                     jobManager.updateJob(job.id, {
                       status: 'failed',
                       error: 'Server failed to reload after analysis. Try again.',
@@ -1513,7 +1512,7 @@ export const createServer = async (port: number, host: string = '127.0.0.1') => 
                 j.retryCount++;
                 const delay = 1000 * Math.pow(2, j.retryCount - 1); // 1s, 2s
                 const lastErr = stderrChunks.trim().split('\n').pop() || '';
-                console.warn(
+                logger.warn(
                   `Analyze worker crashed (code ${code}), retry ${j.retryCount}/${MAX_WORKER_RETRIES} in ${delay}ms` +
                     (lastErr ? `: ${lastErr}` : ''),
                 );
@@ -1775,7 +1774,7 @@ export const createServer = async (port: number, host: string = '127.0.0.1') => 
 
   // Global error handler — catch anything the route handlers miss
   app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error('Unhandled error:', err);
+    logger.error({ err }, 'Unhandled error:');
     res.status(500).json({ error: 'Internal server error' });
   });
 
@@ -1806,14 +1805,14 @@ export const createServer = async (port: number, host: string = '127.0.0.1') => 
     // Catch-all crash guards (mirrors startMCPServer in mcp/server.ts)
     let shuttingDown = false;
     process.on('uncaughtException', (err) => {
-      console.error('GitNexus uncaughtException:', err?.stack || err);
+      logger.error({ err: err?.stack || err }, 'GitNexus uncaughtException:');
       if (!shuttingDown) {
         shuttingDown = true;
         shutdown().catch(() => {});
       }
     });
     process.on('unhandledRejection', (reason: any) => {
-      console.error('GitNexus unhandledRejection:', reason?.stack || reason);
+      logger.error({ detail: reason?.stack || reason }, 'GitNexus unhandledRejection:');
     });
   });
 };
