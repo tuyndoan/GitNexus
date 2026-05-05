@@ -165,29 +165,27 @@ const confidenceForRelType = (relType: string | undefined): number =>
 /** Structured error logging for query failures — replaces empty catch blocks */
 function logQueryError(context: string, err: unknown): void {
   const msg = err instanceof Error ? err.message : String(err);
-  logger.error(`GitNexus [${context}]: ${msg}`);
+  logger.error({ context, err: msg }, 'GitNexus query failed');
 }
 
 /**
- * Structured per-query latency log for production aggregation (#553).
+ * Per-query latency telemetry for production aggregation (#553).
  *
- * Emitted on stderr — NOT stdout — because the MCP stdio transport uses
- * stdout exclusively for JSON-RPC responses (#324), and the CLI e2e test
- * `tool output goes to stdout via fd 1` asserts that stdout parses cleanly
- * as JSON. Any `console.log` from inside a tool handler would corrupt the
- * protocol. Matches the existing `logQueryError` convention above, which
- * uses stderr for the same reason.
+ * Logged at `debug` level — timing is observability/telemetry, not an
+ * error. Operators wanting per-query timing set `GITNEXUS_LOG_LEVEL=debug`
+ * (or equivalent). Emitting at `error` level (the original migration
+ * artifact) caused alerting rules to fire on every successful query and
+ * inflated stderr noise for every MCP/CLI invocation.
  *
- * The `GitNexus [query:timing] …` prefix keeps lines greppable; the
- * `phases` payload is JSON so log-scraping pipelines can parse it
- * without custom format knowledge.
+ * Emitted via the project logger which routes to stderr — never stdout —
+ * because the MCP stdio transport uses stdout exclusively for JSON-RPC
+ * responses (#324) and the CLI e2e test `tool output goes to stdout via
+ * fd 1` asserts stdout parses cleanly as JSON.
  */
 function logQueryTiming(query: string, phases: Record<string, number>): void {
   const totalMs = phases.wall ?? Object.values(phases).reduce((a, b) => a + b, 0);
   const truncated = query.length > 80 ? `${query.slice(0, 80)}…` : query;
-  logger.error(
-    `GitNexus [query:timing] query=${JSON.stringify(truncated)} totalMs=${totalMs} phases=${JSON.stringify(phases)}`,
-  );
+  logger.debug({ query: truncated, totalMs, phases }, 'GitNexus query timing');
 }
 
 export interface CodebaseContext {

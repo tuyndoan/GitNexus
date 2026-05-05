@@ -260,10 +260,17 @@ export const createWorkerPool = (
             timeoutMs: nextTimeout,
           };
           logger.warn(
-            `Worker ${workerIndex} parse job idle timeout after ${job.timeoutMs / 1000}s ` +
-              `(${job.items.length} items, ${job.estimatedBytes} bytes, last progress: ${lastProgress}). ` +
-              `Splitting into ${first.items.length}/${second.items.length} item jobs with ` +
-              `${nextTimeout / 1000}s timeout.`,
+            {
+              workerIndex,
+              timeoutSec: job.timeoutMs / 1000,
+              items: job.items.length,
+              estimatedBytes: job.estimatedBytes,
+              lastProgress,
+              firstSplitItems: first.items.length,
+              secondSplitItems: second.items.length,
+              nextTimeoutSec: nextTimeout / 1000,
+            },
+            `Worker ${workerIndex} parse job idle timeout. Splitting into ${first.items.length}/${second.items.length} item jobs.`,
           );
           // Preserve intuitive retry order; final result order is still enforced by startIndex sort.
           jobs.unshift(first, second);
@@ -273,9 +280,14 @@ export const createWorkerPool = (
         const nextAttempt = job.attempt + 1;
         if (nextAttempt <= poolOptions.maxTimeoutRetries) {
           logger.warn(
-            `Worker ${workerIndex} parse job idle timeout after ${job.timeoutMs / 1000}s ` +
-              `(single item, attempt ${nextAttempt}/${poolOptions.maxTimeoutRetries + 1}). ` +
-              `Retrying with ${nextTimeout / 1000}s timeout.`,
+            {
+              workerIndex,
+              timeoutSec: job.timeoutMs / 1000,
+              attempt: nextAttempt,
+              maxAttempts: poolOptions.maxTimeoutRetries + 1,
+              nextTimeoutSec: nextTimeout / 1000,
+            },
+            `Worker ${workerIndex} parse job idle timeout (single item). Retrying with ${nextTimeout / 1000}s timeout.`,
           );
           jobs.unshift({
             ...job,

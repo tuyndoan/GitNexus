@@ -31,12 +31,15 @@ export const mcpCommand = async () => {
 
   const repos = await backend.listRepos();
   if (repos.length === 0) {
-    logger.error(
+    // Operator-actionable but the server still starts and serves; warn-level,
+    // not error. Tools will discover newly-analyzed repos via lazy refresh.
+    logger.warn(
       'GitNexus: No indexed repos yet. Run `gitnexus analyze` in a git repo — the server will pick it up automatically.',
     );
   } else {
-    logger.error(
-      `GitNexus: MCP server starting with ${repos.length} repo(s): ${repos.map((r) => r.name).join(', ')}`,
+    logger.info(
+      { repoCount: repos.length, repos: repos.map((r) => r.name) },
+      'GitNexus: MCP server starting',
     );
   }
 

@@ -69,6 +69,10 @@ function tryBuildPrettyTransport(): LoggerOptions['transport'] | undefined {
     return {
       target: 'pino-pretty',
       options: {
+        // Route to stderr (fd 2) so pretty output doesn't contaminate
+        // CLI tool data on stdout (fd 1). pino-pretty's default is fd 1,
+        // which would interleave with `gitnexus query | jq` output.
+        destination: 2,
         colorize: true,
         translateTime: 'SYS:HH:MM:ss.l',
         ignore: 'pid,hostname',
