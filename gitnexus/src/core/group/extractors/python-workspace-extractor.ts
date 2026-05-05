@@ -4,6 +4,7 @@ import type { CypherExecutor } from '../contract-extractor.js';
 import type { GroupManifestLink, ContractRole } from '../types.js';
 import { shouldIgnorePath, loadIgnoreRules } from '../../../config/ignore-service.js';
 
+import { logger } from '../../logger.js';
 interface PythonPackageMeta {
   name: string;
   importName: string;
@@ -204,8 +205,7 @@ export async function extractPythonWorkspaceLinks(
     };
     const existing = packagesByImportName.get(manifest.importName);
     if (existing) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.warn(
+      logger.warn(
         `[python-workspace-extractor] duplicate package "${manifest.name}" in "${groupPath}" and "${existing.groupPath}" — skipping "${groupPath}"`,
       );
       continue;

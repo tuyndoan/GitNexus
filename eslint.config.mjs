@@ -67,22 +67,15 @@ export default [
     },
   },
 
-  // Forcing function for the pino migration: warn on any new `console.*` in
-  // core source. Existing call sites carry an eslint-disable-next-line comment
-  // tagged `TODO(pino-migration)` so a `git grep` inventories what's left.
-  // Tests, bin scripts, and the logger module itself are exempt.
-  // CLI/server are exempt above (legitimate stdout output).
-  // Severity is `warn` (not `error`) for the baseline; future PRs can flip to
-  // `error` once the migration sweep lands.
+  // Forcing function for the pino migration. Severity is `error` — the
+  // codebase-wide migration is complete; new `console.*` in core source
+  // must fail lint. CLI/server are exempt above (legitimate stdout output).
+  // Tests, bin scripts, and the logger module itself remain exempt.
   {
     files: ['gitnexus/src/**/*.ts'],
-    ignores: [
-      'gitnexus/src/cli/**',
-      'gitnexus/src/server/**',
-      'gitnexus/src/core/logger.ts',
-    ],
+    ignores: ['gitnexus/src/cli/**', 'gitnexus/src/server/**', 'gitnexus/src/core/logger.ts'],
     rules: {
-      'no-console': 'warn',
+      'no-console': 'error',
     },
   },
 

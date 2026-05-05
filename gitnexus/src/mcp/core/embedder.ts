@@ -15,6 +15,7 @@ import { resolveEmbeddingConfig } from '../../core/embeddings/config.js';
 import { applyHfEnvOverrides } from '../../core/embeddings/hf-env.js';
 import { silenceStdout, restoreStdout, realStderrWrite } from '../../core/lbug/pool-adapter.js';
 
+import { logger } from '../../core/logger.js';
 // Model config
 const MODEL_ID = 'Snowflake/snowflake-arctic-embed-xs';
 
@@ -51,8 +52,7 @@ export const initEmbedder = async (): Promise<FeatureExtractionPipeline> => {
       applyHfEnvOverrides(env);
       const embeddingConfig = resolveEmbeddingConfig();
 
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.error('GitNexus: Loading embedding model (first search may take a moment)...');
+      logger.error('GitNexus: Loading embedding model (first search may take a moment)...');
 
       const devicesToTry: Array<'dml' | 'cuda' | 'cpu'> =
         embeddingConfig.device === 'dml' || embeddingConfig.device === 'cuda'
@@ -83,8 +83,7 @@ export const initEmbedder = async (): Promise<FeatureExtractionPipeline> => {
             restoreStdout();
             process.stderr.write = realStderrWrite;
           }
-          // eslint-disable-next-line no-console -- TODO(pino-migration)
-          console.error(`GitNexus: Embedding model loaded (${device})`);
+          logger.error(`GitNexus: Embedding model loaded (${device})`);
           return embedderInstance!;
         } catch {
           if (device === 'cpu') throw new Error('Failed to load embedding model');

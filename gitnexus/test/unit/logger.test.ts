@@ -62,7 +62,7 @@ describe('createLogger — debugEnvVar gating', () => {
     delete process.env[ENV];
   });
 
-  it('without debugEnvVar, .debug() emits nothing (default warn level)', () => {
+  it('without debugEnvVar, .debug() emits nothing (default info level)', () => {
     const dest = new MemoryWritable();
     const log = createLogger('t', { destination: dest });
     log.debug('should not appear');
@@ -131,7 +131,12 @@ describe('createLogger — structured output safety', () => {
     // Exactly one record. The internal \r\n is JSON-escaped, not a record boundary.
     expect(dest.records().length).toBe(1);
     // Raw text has trailing newline as record terminator — count of \n == 1.
-    expect(dest.text().split('\n').filter((l) => l.length > 0).length).toBe(1);
+    expect(
+      dest
+        .text()
+        .split('\n')
+        .filter((l) => l.length > 0).length,
+    ).toBe(1);
   });
 
   it('U+2028 / U+2029 in a string field stays inside one NDJSON record', () => {

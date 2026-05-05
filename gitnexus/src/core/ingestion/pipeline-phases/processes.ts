@@ -19,6 +19,7 @@ import { processProcesses, type ProcessDetectionResult } from '../process-proces
 import { generateId } from '../../../lib/utils.js';
 import { isDev } from '../utils/env.js';
 
+import { logger } from '../../logger.js';
 export interface ProcessesOutput {
   processResult: ProcessDetectionResult;
 }
@@ -67,8 +68,7 @@ export const processesPhase: PipelinePhase<ProcessesOutput> = {
     );
 
     if (isDev) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.log(
+      logger.info(
         `🔄 Process detection: ${processResult.stats.totalProcesses} processes found (${processResult.stats.crossCommunityCount} cross-community)`,
       );
     }
@@ -168,8 +168,7 @@ export const processesPhase: PipelinePhase<ProcessesOutput> = {
         }
       }
       if (isDev && linked > 0) {
-        // eslint-disable-next-line no-console -- TODO(pino-migration)
-        console.log(`🔗 Linked ${linked} Route/Tool nodes to execution flows`);
+        logger.info(`🔗 Linked ${linked} Route/Tool nodes to execution flows`);
       }
     }
 

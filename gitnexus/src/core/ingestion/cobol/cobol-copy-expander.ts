@@ -1,3 +1,4 @@
+import { logger } from '../../logger.js';
 /**
  * COBOL COPY statement expansion engine.
  *
@@ -454,8 +455,7 @@ export function expandCopies(
       if (visited.has(resolvedPath)) {
         if (!warnedCircular.has(resolvedPath)) {
           warnedCircular.add(resolvedPath);
-          // eslint-disable-next-line no-console -- TODO(pino-migration)
-          console.warn(
+          logger.warn(
             `[cobol-copy-expander] Circular COPY detected: ${cs.target} (${resolvedPath}) ` +
               `includes itself. Skipping expansion.`,
           );
@@ -465,8 +465,7 @@ export function expandCopies(
 
       // Max depth exceeded — keep unexpanded
       if (depth >= maxDepth) {
-        // eslint-disable-next-line no-console -- TODO(pino-migration)
-        console.warn(
+        logger.warn(
           `[cobol-copy-expander] Max expansion depth (${maxDepth}) reached for ` +
             `COPY ${cs.target} in ${srcPath}. Skipping expansion.`,
         );
@@ -477,8 +476,7 @@ export function expandCopies(
       if (++totalExpansions > MAX_TOTAL_EXPANSIONS) {
         if (!warnedCircular.has('__max_total__')) {
           warnedCircular.add('__max_total__');
-          // eslint-disable-next-line no-console -- TODO(pino-migration)
-          console.warn(
+          logger.warn(
             `[cobol-copy-expander] Max total expansions (${MAX_TOTAL_EXPANSIONS}) reached ` +
               `in ${srcPath}. Skipping further expansions.`,
           );

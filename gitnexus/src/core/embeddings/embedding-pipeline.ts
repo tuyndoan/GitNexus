@@ -44,6 +44,7 @@ import {
 } from '../lbug/schema.js';
 import { loadVectorExtension } from '../lbug/lbug-adapter.js';
 import { getExactScanLimit } from '../platform/capabilities.js';
+import { logger } from '../logger.js';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -157,8 +158,7 @@ const queryEmbeddableNodes = async (
       }
     } catch (error) {
       if (isDev) {
-        // eslint-disable-next-line no-console -- TODO(pino-migration)
-        console.warn(`Query for ${label} nodes failed:`, error);
+        logger.warn({ error }, `Query for ${label} nodes failed:`);
       }
     }
   }
@@ -213,8 +213,7 @@ const createVectorIndex = async (
     return true;
   } catch (error) {
     if (isDev) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.warn('Vector index creation warning:', error);
+      logger.warn({ error }, 'Vector index creation warning:');
     }
     return false;
   }
@@ -258,8 +257,7 @@ export const runEmbeddingPipeline = async (
 
   try {
     const vectorAvailable = await ensureVectorExtensionAvailable();
-    // eslint-disable-next-line no-console -- TODO(pino-migration)
-    if (!vectorAvailable && isDev) console.warn(vectorUnavailableMessage);
+    logger.warn(vectorUnavailableMessage);
 
     // Phase 1: Load embedding model
     onProgress({
@@ -286,8 +284,7 @@ export const runEmbeddingPipeline = async (
     });
 
     if (isDev) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.log('🔍 Querying embeddable nodes...');
+      logger.info('🔍 Querying embeddable nodes...');
     }
 
     // Phase 2: Query embeddable nodes
@@ -329,8 +326,7 @@ export const runEmbeddingPipeline = async (
       // (Kuzu forbids SET on vector-indexed properties; DELETE-then-INSERT is the sanctioned pattern)
       if (staleNodeIds.length > 0) {
         if (isDev) {
-          // eslint-disable-next-line no-console -- TODO(pino-migration)
-          console.log(`🔄 Deleting ${staleNodeIds.length} stale embedding rows for re-embed`);
+          logger.info(`🔄 Deleting ${staleNodeIds.length} stale embedding rows for re-embed`);
         }
         try {
           await executeWithReusedStatement(
@@ -351,8 +347,7 @@ export const runEmbeddingPipeline = async (
       }
 
       if (isDev) {
-        // eslint-disable-next-line no-console -- TODO(pino-migration)
-        console.log(
+        logger.info(
           `📦 Incremental embeddings: ${beforeCount} total, ${existingEmbeddings.size} cached, ${staleNodeIds.length} stale, ${nodes.length} to embed`,
         );
       }
@@ -361,8 +356,7 @@ export const runEmbeddingPipeline = async (
     const totalNodes = nodes.length;
 
     if (isDev) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.log(`📊 Found ${totalNodes} embeddable nodes`);
+      logger.info(`📊 Found ${totalNodes} embeddable nodes`);
     }
 
     if (totalNodes === 0) {
@@ -449,10 +443,9 @@ export const runEmbeddingPipeline = async (
             );
           } catch (chunkErr) {
             if (isDev) {
-              // eslint-disable-next-line no-console -- TODO(pino-migration)
-              console.warn(
+              logger.warn(
+                { chunkErr },
                 `⚠️ AST chunking failed for ${node.label} "${node.name}" (${node.filePath}), falling back to character-based chunking:`,
-                chunkErr,
               );
             }
             chunks = characterChunk(node.content, startLine, endLine, chunkSize, overlap);
@@ -490,10 +483,9 @@ export const runEmbeddingPipeline = async (
         try {
           embeddings = await embedBatch(subTexts);
         } catch (embedErr) {
-          // eslint-disable-next-line no-console -- TODO(pino-migration)
-          console.error(
+          logger.error(
+            { embedErr },
             `❌ embedBatch failed for ${subTexts.length} texts (first: "${subTexts[0]?.substring(0, 80)}..."):`,
-            embedErr,
           );
           throw embedErr;
         }
@@ -529,8 +521,7 @@ export const runEmbeddingPipeline = async (
     });
 
     if (isDev) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.log('📇 Creating vector index...');
+      logger.info('📇 Creating vector index...');
     }
 
     const vectorIndexReady = await createVectorIndex(executeQuery);
@@ -543,8 +534,7 @@ export const runEmbeddingPipeline = async (
     });
 
     if (isDev) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.log(
+      logger.info(
         `✅ Embedding pipeline complete! (${totalChunks} chunks from ${totalNodes} nodes)`,
       );
     }
@@ -558,8 +548,7 @@ export const runEmbeddingPipeline = async (
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     if (isDev) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.error('❌ Embedding pipeline error:', error);
+      logger.error({ error }, '❌ Embedding pipeline error:');
     }
 
     onProgress({

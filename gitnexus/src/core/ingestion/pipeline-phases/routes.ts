@@ -32,6 +32,7 @@ import { generateId } from '../../../lib/utils.js';
 import { readFileContents } from '../filesystem-walker.js';
 import { isDev } from '../utils/env.js';
 
+import { logger } from '../../logger.js';
 const EXPO_NAV_PATTERNS = [
   /router\.(push|replace|navigate)\(\s*['"`]([^'"`]+)['"`]/g,
   /<Link\s+[^>]*href=\s*['"`]([^'"`]+)['"`]/g,
@@ -174,8 +175,7 @@ export const routesPhase: PipelinePhase<RoutesOutput> = {
       }
 
       if (isDev) {
-        // eslint-disable-next-line no-console -- TODO(pino-migration)
-        console.log(
+        logger.info(
           `🗺️ Route registry: ${routeRegistry.size} routes${duplicateRoutes > 0 ? ` (${duplicateRoutes} duplicate URLs skipped)` : ''}`,
         );
       }
@@ -225,8 +225,7 @@ export const routesPhase: PipelinePhase<RoutesOutput> = {
             linkedCount++;
           }
           if (isDev && linkedCount > 0) {
-            // eslint-disable-next-line no-console -- TODO(pino-migration)
-            console.log(
+            logger.info(
               `🛡️ Linked ${mwPath} middleware [${mwLabel.join(', ')}] to ${linkedCount} routes`,
             );
           }
@@ -292,8 +291,7 @@ export const routesPhase: PipelinePhase<RoutesOutput> = {
 
       processNextjsFetchRoutes(ctx.graph, allFetchCalls, routeURLToFile, consumerContents);
       if (isDev) {
-        // eslint-disable-next-line no-console -- TODO(pino-migration)
-        console.log(
+        logger.info(
           `🔗 Processed ${allFetchCalls.length} fetch() calls against ${routeRegistry.size} routes`,
         );
       }

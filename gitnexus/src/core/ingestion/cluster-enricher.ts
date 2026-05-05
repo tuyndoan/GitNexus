@@ -7,6 +7,7 @@
 
 import { CommunityNode } from './community-processor.js';
 
+import { logger } from '../logger.js';
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -128,8 +129,7 @@ export const enrichClusters = async (
       enrichments.set(community.id, enrichment);
     } catch (error) {
       // On error, fallback to heuristic
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.warn(`Failed to enrich cluster ${community.id}:`, error);
+      logger.warn({ error }, `Failed to enrich cluster ${community.id}:`);
       enrichments.set(community.id, {
         name: community.heuristicLabel,
         keywords: [],
@@ -211,8 +211,7 @@ Output JSON array:
         }
       }
     } catch (error) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.warn('Batch enrichment failed, falling back to heuristics:', error);
+      logger.warn({ error }, 'Batch enrichment failed, falling back to heuristics:');
       // Fallback for this batch
       for (const community of batch) {
         enrichments.set(community.id, {

@@ -39,6 +39,8 @@ describe('analyzeCommand worker timeout validation', () => {
   it.each(['0', 'abc', '-5', 'Infinity'])(
     'rejects invalid --worker-timeout value %s before analysis starts',
     async (workerTimeout) => {
+      // CLI code (cli/analyze.ts) is exempt from the pino migration —
+      // user-facing stdout/stderr is the contract. Spy on console.error.
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
       const { analyzeCommand } = await import('../../src/cli/analyze.js');
 

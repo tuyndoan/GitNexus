@@ -2,6 +2,7 @@ import Parser from 'tree-sitter';
 import { createRequire } from 'node:module';
 import { SupportedLanguages } from 'gitnexus-shared';
 
+import { logger } from '../logger.js';
 const _require = createRequire(import.meta.url);
 
 /**
@@ -175,10 +176,8 @@ const logFailure = (key: string, result: LoadResult): void => {
   logged.add(key);
   const message = `[gitnexus] ${result.note} (${result.error.message})`;
 
-  // eslint-disable-next-line no-console -- TODO(pino-migration)
-  if (result.severity === 'error') console.error(message);
-  // eslint-disable-next-line no-console -- TODO(pino-migration)
-  else console.warn(message);
+  logger.error(message);
+  logger.warn(message);
 };
 
 export const resolveLanguageKey = (language: SupportedLanguages, filePath?: string): string =>

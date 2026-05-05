@@ -13,6 +13,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
 
+import { _captureLogger } from '../../src/core/logger.js';
 const DIST_WORKER = path.resolve(
   __dirname,
   '..',
@@ -211,7 +212,7 @@ describe('worker pool integration', () => {
     `,
     );
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const cap = _captureLogger();
     const workerUrl = pathToFileURL(workerPath) as URL;
     pool = createWorkerPool(workerUrl, 1);
 
@@ -221,9 +222,9 @@ describe('worker pool integration', () => {
       ]);
       expect(results).toHaveLength(1);
       expect(results[0].fileCount).toBe(1);
-      expect(warnSpy).toHaveBeenCalledWith('warning before result');
+      expect(cap.records().some((r) => r.msg === 'warning before result')).toBe(true);
     } finally {
-      warnSpy.mockRestore();
+      cap.restore();
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
@@ -298,7 +299,7 @@ describe('worker pool integration', () => {
     `,
     );
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const cap = _captureLogger();
     pool = createWorkerPool(pathToFileURL(workerPath) as URL, 1, {
       subBatchIdleTimeoutMs: 150,
       maxTimeoutRetries: 1,
@@ -308,9 +309,11 @@ describe('worker pool integration', () => {
     try {
       const results = await pool.dispatch<any, any>([{ path: 'retry.ts', content: '' }]);
       expect(results).toEqual([{ fileCount: 1, recovered: true }]);
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Retrying with 0.6s timeout'));
+      expect(
+        cap.records().some((r) => String(r.msg ?? '').includes('Retrying with 0.6s timeout')),
+      ).toBe(true);
     } finally {
-      warnSpy.mockRestore();
+      cap.restore();
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
@@ -344,7 +347,7 @@ describe('worker pool integration', () => {
     `,
     );
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const cap = _captureLogger();
     pool = createWorkerPool(pathToFileURL(workerPath) as URL, 1, {
       subBatchSize: 2,
       subBatchIdleTimeoutMs: 150,
@@ -372,9 +375,11 @@ describe('worker pool integration', () => {
       ]);
       expect(progressCalls).toEqual([...progressCalls].sort((a, b) => a - b));
       expect(progressCalls.at(-1)).toBe(4);
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Splitting into 1/1 item jobs'));
+      expect(
+        cap.records().some((r) => String(r.msg ?? '').includes('Splitting into 1/1 item jobs')),
+      ).toBe(true);
     } finally {
-      warnSpy.mockRestore();
+      cap.restore();
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
@@ -440,7 +445,7 @@ describe('worker pool integration', () => {
     `,
     );
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const cap = _captureLogger();
     pool = createWorkerPool(pathToFileURL(workerPath) as URL, 2, {
       subBatchSize: 2,
       subBatchIdleTimeoutMs: 150,
@@ -466,9 +471,11 @@ describe('worker pool integration', () => {
         'tail-a.ts',
         'tail-b.ts',
       ]);
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Splitting into 1/1 item jobs'));
+      expect(
+        cap.records().some((r) => String(r.msg ?? '').includes('Splitting into 1/1 item jobs')),
+      ).toBe(true);
     } finally {
-      warnSpy.mockRestore();
+      cap.restore();
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
@@ -504,7 +511,7 @@ describe('worker pool integration', () => {
     `,
     );
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const cap = _captureLogger();
     // 2 workers but subBatchSize=4 means all 4 items form 1 job; second worker stays idle.
     pool = createWorkerPool(pathToFileURL(workerPath) as URL, 2, {
       subBatchSize: 4,
@@ -523,9 +530,9 @@ describe('worker pool integration', () => {
 
       const allPaths = results.flatMap((r: any) => r.paths);
       expect(allPaths.sort()).toEqual(['a.ts', 'b.ts', 'c.ts', 'd.ts']);
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Splitting into'));
+      expect(cap.records().some((r) => String(r.msg ?? '').includes('Splitting into'))).toBe(true);
     } finally {
-      warnSpy.mockRestore();
+      cap.restore();
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   }, 15_000);

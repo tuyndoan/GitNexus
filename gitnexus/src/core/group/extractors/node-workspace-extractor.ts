@@ -4,6 +4,7 @@ import type { CypherExecutor } from '../contract-extractor.js';
 import type { GroupManifestLink, ContractRole } from '../types.js';
 import { shouldIgnorePath, loadIgnoreRules } from '../../../config/ignore-service.js';
 
+import { logger } from '../../logger.js';
 interface PackageMeta {
   name: string;
   groupPath: string;
@@ -205,8 +206,7 @@ export async function extractNodeWorkspaceLinks(
     };
     const existing = packagesByName.get(manifest.name);
     if (existing) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.warn(
+      logger.warn(
         `[node-workspace-extractor] duplicate package name "${manifest.name}" in "${groupPath}" and "${existing.groupPath}" — skipping "${groupPath}"`,
       );
       continue;

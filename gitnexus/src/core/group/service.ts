@@ -14,6 +14,7 @@ import {
 } from './group-path-utils.js';
 import { getDefaultGitnexusDir, getGroupDir, listGroups, readContractRegistry } from './storage.js';
 import { syncGroup } from './sync.js';
+import { logger } from '../logger.js';
 import type {
   ContractRegistry,
   CrossLink,
@@ -170,13 +171,11 @@ async function loadContractRegistryResilient(
           contracts.push(row);
         } else {
           skippedCorrupt++;
-          // eslint-disable-next-line no-console -- TODO(pino-migration)
-          console.warn('[group] skipping corrupt contract row in contracts.json');
+          logger.warn('[group] skipping corrupt contract row in contracts.json');
         }
       } catch {
         skippedCorrupt++;
-        // eslint-disable-next-line no-console -- TODO(pino-migration)
-        console.warn('[group] skipping corrupt contract row in contracts.json');
+        logger.warn('[group] skipping corrupt contract row in contracts.json');
       }
     }
   }
@@ -189,13 +188,11 @@ async function loadContractRegistryResilient(
           crossLinks.push(row);
         } else {
           skippedCorrupt++;
-          // eslint-disable-next-line no-console -- TODO(pino-migration)
-          console.warn('[group] skipping corrupt crossLinks row in contracts.json');
+          logger.warn('[group] skipping corrupt crossLinks row in contracts.json');
         }
       } catch {
         skippedCorrupt++;
-        // eslint-disable-next-line no-console -- TODO(pino-migration)
-        console.warn('[group] skipping corrupt crossLinks row in contracts.json');
+        logger.warn('[group] skipping corrupt crossLinks row in contracts.json');
       }
     }
   }

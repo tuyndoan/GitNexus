@@ -38,6 +38,7 @@ import { runScopeResolution } from './run.js';
 import { SCOPE_RESOLVERS } from './registry.js';
 import { isDev, isSemanticModelValidatorEnabled } from '../../utils/env.js';
 
+import { logger } from '../../../logger.js';
 export interface ScopeResolutionOutput {
   /** True when at least one language ran. */
   readonly ran: boolean;
@@ -144,8 +145,7 @@ export const scopeResolutionPhase: PipelinePhase<ScopeResolutionOutput> = {
           resolutionConfig,
           onWarn: (msg) => {
             if (isSemanticModelValidatorEnabled()) {
-              // eslint-disable-next-line no-console -- TODO(pino-migration)
-              console.warn(`[scope-resolution:${lang}] ${msg}`);
+              logger.warn(`[scope-resolution:${lang}] ${msg}`);
             }
           },
         },
@@ -163,8 +163,7 @@ export const scopeResolutionPhase: PipelinePhase<ScopeResolutionOutput> = {
       });
 
       if (isDev) {
-        // eslint-disable-next-line no-console -- TODO(pino-migration)
-        console.log(
+        logger.info(
           `[scope-resolution:${lang}] ${stats.filesProcessed} files → ${stats.importsEmitted} IMPORTS + ${stats.referenceEdgesEmitted} reference edges (${stats.resolve.unresolved} unresolved sites, ${stats.referenceSkipped} skipped)`,
         );
       }

@@ -3,6 +3,7 @@ import os from 'node:os';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
+import { logger } from '../../logger.js';
 export interface WorkerPool {
   /**
    * Dispatch items across workers. Items are split into bounded jobs, each job
@@ -258,8 +259,7 @@ export const createWorkerPool = (
             splitDepth: job.splitDepth + 1,
             timeoutMs: nextTimeout,
           };
-          // eslint-disable-next-line no-console -- TODO(pino-migration)
-          console.warn(
+          logger.warn(
             `Worker ${workerIndex} parse job idle timeout after ${job.timeoutMs / 1000}s ` +
               `(${job.items.length} items, ${job.estimatedBytes} bytes, last progress: ${lastProgress}). ` +
               `Splitting into ${first.items.length}/${second.items.length} item jobs with ` +
@@ -272,8 +272,7 @@ export const createWorkerPool = (
 
         const nextAttempt = job.attempt + 1;
         if (nextAttempt <= poolOptions.maxTimeoutRetries) {
-          // eslint-disable-next-line no-console -- TODO(pino-migration)
-          console.warn(
+          logger.warn(
             `Worker ${workerIndex} parse job idle timeout after ${job.timeoutMs / 1000}s ` +
               `(single item, attempt ${nextAttempt}/${poolOptions.maxTimeoutRetries + 1}). ` +
               `Retrying with ${nextTimeout / 1000}s timeout.`,
@@ -367,8 +366,7 @@ export const createWorkerPool = (
             reportProgress();
           } else if (msg.type === 'warning') {
             resetIdleTimer();
-            // eslint-disable-next-line no-console -- TODO(pino-migration)
-            console.warn(msg.message);
+            logger.warn(msg.message);
           } else if (msg.type === 'sub-batch-done') {
             waitingForFlush = true;
             resetIdleTimer();

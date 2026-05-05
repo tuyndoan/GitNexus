@@ -24,6 +24,7 @@ import {
 } from './lbug-config.js';
 import { isVectorExtensionSupportedByPlatform } from '../platform/capabilities.js';
 
+import { logger } from '../logger.js';
 // ---------------------------------------------------------------------------
 // Relationship CSV splitting — extracted for testability (PR #818)
 // ---------------------------------------------------------------------------
@@ -348,8 +349,7 @@ const doInitLbug = async (dbPath: string) => {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (!msg.includes('already exists')) {
-        // eslint-disable-next-line no-console -- TODO(pino-migration)
-        console.warn(`⚠️ Schema creation warning: ${msg.slice(0, 120)}`);
+        logger.warn(`⚠️ Schema creation warning: ${msg.slice(0, 120)}`);
       }
     }
   }
@@ -702,8 +702,7 @@ export const insertNodeToLbug = async (
     return false;
   } catch (e: any) {
     // Node may already exist or other error
-    // eslint-disable-next-line no-console -- TODO(pino-migration)
-    console.error(`Failed to insert ${label} node:`, e.message);
+    logger.error({ err: e.message }, `Failed to insert ${label} node:`);
     return false;
   }
 };
@@ -1030,16 +1029,14 @@ export const fetchExistingEmbeddingHashes = async (
           const nodeId = r.nodeId ?? r[0];
           if (nodeId) map.set(nodeId, STALE_HASH_SENTINEL);
         }
-        // eslint-disable-next-line no-console -- TODO(pino-migration)
-        console.log(
+        logger.info(
           `[embed] ${map.size} nodes in legacy DB (missing chunk-aware columns) — all treated as stale`,
         );
         return map;
       } catch (fallbackErr: any) {
         const fallbackMsg = fallbackErr?.message ?? '';
         if (isMissingColumnOrTableError(fallbackMsg)) {
-          // eslint-disable-next-line no-console -- TODO(pino-migration)
-          console.log(
+          logger.info(
             `[embed] CodeEmbedding table not yet present — full embedding run (${fallbackMsg})`,
           );
           return undefined;

@@ -580,7 +580,7 @@ describe('loadIgnoreRules — error handling', () => {
       expect(result).toBeNull();
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('.gitignore'));
 
-      warnSpy.mockRestore();
+      cap.restore();
       await fs.chmod(gitignorePath, 0o644);
       await fs.unlink(gitignorePath);
     },

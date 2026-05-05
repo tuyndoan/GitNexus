@@ -4,6 +4,7 @@ import type { CypherExecutor } from '../contract-extractor.js';
 import type { GroupManifestLink, ContractRole } from '../types.js';
 import { shouldIgnorePath, loadIgnoreRules } from '../../../config/ignore-service.js';
 
+import { logger } from '../../logger.js';
 interface GoModuleMeta {
   modulePath: string;
   groupPath: string;
@@ -211,8 +212,7 @@ export async function extractGoWorkspaceLinks(
     };
     const existing = modulesByPath.get(manifest.modulePath);
     if (existing) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.warn(
+      logger.warn(
         `[go-workspace-extractor] duplicate module "${manifest.modulePath}" in "${groupPath}" and "${existing.groupPath}" — skipping "${groupPath}"`,
       );
       continue;

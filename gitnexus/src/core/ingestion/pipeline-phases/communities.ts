@@ -15,6 +15,7 @@ import type { StructureOutput } from './structure.js';
 import { processCommunities, type CommunityDetectionResult } from '../community-processor.js';
 import { isDev } from '../utils/env.js';
 
+import { logger } from '../../logger.js';
 export interface CommunitiesOutput {
   communityResult: CommunityDetectionResult;
 }
@@ -47,8 +48,7 @@ export const communitiesPhase: PipelinePhase<CommunitiesOutput> = {
     });
 
     if (isDev) {
-      // eslint-disable-next-line no-console -- TODO(pino-migration)
-      console.log(
+      logger.info(
         `🏘️ Community detection: ${communityResult.stats.totalCommunities} communities found (modularity: ${communityResult.stats.modularity.toFixed(3)})`,
       );
     }
