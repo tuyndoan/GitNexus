@@ -6,7 +6,7 @@
  * This is critical for cross-platform CI where vitest runs from src/
  * but workers need compiled .js files.
  */
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { createWorkerPool, WorkerPool } from '../../src/core/ingestion/workers/worker-pool.js';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
