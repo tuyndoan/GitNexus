@@ -8,6 +8,7 @@
 
 import { startMCPServer } from '../mcp/server.js';
 import { LocalBackend } from '../mcp/local/local-backend.js';
+import { warnMissingOptionalGrammars } from './optional-grammars.js';
 
 export const mcpCommand = async () => {
   // Prevent unhandled errors from crashing the MCP server process.
@@ -21,6 +22,11 @@ export const mcpCommand = async () => {
     const msg = reason instanceof Error ? reason.message : String(reason);
     console.error(`GitNexus MCP: unhandled rejection — ${msg}`);
   });
+
+  // Surface missing optional grammars at startup so users learn why
+  // .dart/.proto files won't be parsed instead of silently getting a
+  // degraded index.
+  warnMissingOptionalGrammars({ context: 'mcp' });
 
   // Initialize multi-repo backend from registry.
   // The server starts even with 0 repos — tools call refreshRepos() lazily,
