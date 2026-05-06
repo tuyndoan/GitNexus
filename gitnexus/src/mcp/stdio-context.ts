@@ -24,11 +24,11 @@
  */
 
 import { AsyncLocalStorage } from 'node:async_hooks';
-import {
-  realStdoutWrite,
-  realStderrWrite,
-  setActiveStdoutWrite,
-} from '../core/lbug/pool-adapter.js';
+// Import from the leaf module, NOT `core/lbug/pool-adapter.js`. pool-adapter
+// pulls in `@ladybugdb/core`, which would put the native module in
+// `cli/mcp.ts`'s static-import closure — exactly the pre-sentinel window
+// Codex's adversarial review flagged on PR #1383.
+import { realStdoutWrite, realStderrWrite, setActiveStdoutWrite } from './stdio-capture.js';
 
 interface McpWriteContext {
   mcp: true;

@@ -84,33 +84,22 @@ const MAX_CONNS_PER_REPO = 8;
 
 let idleTimer: ReturnType<typeof setInterval> | null = null;
 
-/** Saved real stdout/stderr write — used to silence native module output without race conditions */
-// eslint-disable-next-line no-restricted-syntax -- this IS the captured-real-write infrastructure used by the MCP sentinel
-export const realStdoutWrite = process.stdout.write.bind(process.stdout);
-export const realStderrWrite = process.stderr.write.bind(process.stderr);
+// Stdout-capture state lives in `gitnexus/src/mcp/stdio-capture.ts` — a leaf
+// module with zero non-`node:` imports. We re-export the same symbols here
+// so the existing test mock seam (`gitnexus/src/mcp/core/lbug-adapter.ts`
+// re-exports * from this file, and 8+ test files use that path with
+// `vi.mock(...)`) continues to work without churn. The source of truth is
+// the leaf module; this re-export is a compatibility shim.
+//
+// Why the leaf module exists: Codex's adversarial review on PR #1383 found
+// that putting this state in pool-adapter.ts pulled `@ladybugdb/core` into
+// `cli/mcp.ts`'s static-import closure (via stdio-context → pool-adapter →
+// @ladybugdb/core), corrupting stdout in the pre-sentinel window. Routing
+// through the leaf breaks that chain.
+export { realStdoutWrite, realStderrWrite, setActiveStdoutWrite } from '../../mcp/stdio-capture.js';
+import { getActiveStdoutWrite } from '../../mcp/stdio-capture.js';
+
 let stdoutSilenceCount = 0;
-
-/**
- * The function `restoreStdout` (and the watchdog) should restore *to*
- * when un-silencing. Defaults to the captured real write. The MCP server
- * registers the stdout sentinel here at startMCPServer so silenceStdout
- * cycles preserve the sentinel — without this, every restore would bypass
- * the sentinel and leave any stray write going to real stdout uncaught.
- */
-type StdoutWrite = typeof process.stdout.write;
-let activeStdoutWrite: StdoutWrite = realStdoutWrite;
-
-/**
- * Register a wrapper (e.g. the MCP sentinel) as the active stdout write.
- * silenceStdout/restoreStdout cycles will preserve the wrapper instead of
- * unwinding to the raw realStdoutWrite. Returns the previous value so
- * callers can chain or restore.
- */
-export function setActiveStdoutWrite(fn: StdoutWrite): StdoutWrite {
-  const prev = activeStdoutWrite;
-  activeStdoutWrite = fn;
-  return prev;
-}
 /** True while pre-warming connections — prevents watchdog from prematurely restoring stdout */
 let preWarmActive = false;
 
@@ -241,7 +230,7 @@ export function restoreStdout(): void {
   if (--stdoutSilenceCount <= 0) {
     stdoutSilenceCount = 0;
     // eslint-disable-next-line no-restricted-syntax -- restoring the active stdout-write handler is the silencing API contract
-    process.stdout.write = activeStdoutWrite;
+    process.stdout.write = getActiveStdoutWrite();
   }
 }
 
@@ -253,7 +242,7 @@ setInterval(() => {
   if (stdoutSilenceCount > 0 && !preWarmActive && activeQueryCount === 0) {
     stdoutSilenceCount = 0;
     // eslint-disable-next-line no-restricted-syntax -- watchdog recovery for stuck silencing
-    process.stdout.write = activeStdoutWrite;
+    process.stdout.write = getActiveStdoutWrite();
   }
 }, 1000).unref();
 
