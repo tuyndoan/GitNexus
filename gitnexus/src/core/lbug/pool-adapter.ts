@@ -85,6 +85,7 @@ const MAX_CONNS_PER_REPO = 8;
 let idleTimer: ReturnType<typeof setInterval> | null = null;
 
 /** Saved real stdout/stderr write — used to silence native module output without race conditions */
+// eslint-disable-next-line no-restricted-syntax -- this IS the captured-real-write infrastructure used by the MCP sentinel
 export const realStdoutWrite = process.stdout.write.bind(process.stdout);
 export const realStderrWrite = process.stderr.write.bind(process.stderr);
 let stdoutSilenceCount = 0;
@@ -209,6 +210,7 @@ let activeQueryCount = 0;
  */
 export function silenceStdout(): void {
   if (stdoutSilenceCount++ === 0) {
+    // eslint-disable-next-line no-restricted-syntax -- silencing infrastructure; replacement is a no-op
     process.stdout.write = (() => true) as any;
   }
 }
@@ -216,6 +218,7 @@ export function silenceStdout(): void {
 export function restoreStdout(): void {
   if (--stdoutSilenceCount <= 0) {
     stdoutSilenceCount = 0;
+    // eslint-disable-next-line no-restricted-syntax -- restoring the captured real write is the silencing API contract
     process.stdout.write = realStdoutWrite;
   }
 }
@@ -227,6 +230,7 @@ export function restoreStdout(): void {
 setInterval(() => {
   if (stdoutSilenceCount > 0 && !preWarmActive && activeQueryCount === 0) {
     stdoutSilenceCount = 0;
+    // eslint-disable-next-line no-restricted-syntax -- watchdog recovery for stuck silencing
     process.stdout.write = realStdoutWrite;
   }
 }, 1000).unref();
