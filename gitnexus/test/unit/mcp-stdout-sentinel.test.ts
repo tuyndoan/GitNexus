@@ -225,6 +225,53 @@ describe('mcp/stdio-context — createStdoutSentinel', () => {
     expect(sentinel.write('')).toBe(true);
   });
 
+  it('handles plain Uint8Array (not Buffer) correctly when redirecting', () => {
+    const sentinel = createStdoutSentinel({
+      realStdoutWrite: capture.realStdoutWrite,
+      realStderrWrite: capture.realStderrWrite,
+    });
+    // Plain Uint8Array — Buffer.isBuffer returns false. Bytes spell "hi\n".
+    const u8 = new Uint8Array([0x68, 0x69, 0x0a]);
+    sentinel.write(u8);
+
+    const stderr = joinedStderr(capture.captured);
+    expect(stderr).toContain('hi');
+    expect(stderr).not.toMatch(/\b104,\s*105/); // not falling through to String(chunk) → "104,105,10"
+  });
+
+  it('invokes the Writable callback (if provided) for redirected writes', async () => {
+    const sentinel = createStdoutSentinel({
+      realStdoutWrite: capture.realStdoutWrite,
+      realStderrWrite: capture.realStderrWrite,
+    });
+    let called = false;
+    let cbErr: Error | null | undefined = undefined;
+    sentinel.write('rogue\n', 'utf8', (err: Error | null | undefined) => {
+      called = true;
+      cbErr = err;
+    });
+    // Callback fires on next tick, not sync.
+    expect(called).toBe(false);
+    await new Promise((r) => setImmediate(r));
+    expect(called).toBe(true);
+    expect(cbErr).toBeNull();
+  });
+
+  it('invokes the Writable callback for redirected writes when called past the rate-limit cap', async () => {
+    const sentinel = createStdoutSentinel({
+      realStdoutWrite: capture.realStdoutWrite,
+      realStderrWrite: capture.realStderrWrite,
+      maxRedirects: 1,
+    });
+    sentinel.write('first\n');
+    let called = false;
+    sentinel.write('second\n', () => {
+      called = true;
+    });
+    await new Promise((r) => setImmediate(r));
+    expect(called).toBe(true);
+  });
+
   it('handles a multi-call sequence where some writes are tagged and some are not', () => {
     const sentinel = createStdoutSentinel({
       realStdoutWrite: capture.realStdoutWrite,

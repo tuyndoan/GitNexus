@@ -24,7 +24,7 @@ import {
   GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { GITNEXUS_TOOLS } from './tools.js';
-import { realStdoutWrite, realStderrWrite } from './core/lbug-adapter.js';
+import { realStdoutWrite, realStderrWrite, setActiveStdoutWrite } from './core/lbug-adapter.js';
 import { createStdoutSentinel } from './stdio-context.js';
 import type { LocalBackend } from './local/local-backend.js';
 import { getResourceDefinitions, getResourceTemplates, readResource } from './resources.js';
@@ -288,14 +288,27 @@ Follow these steps:
 export async function startMCPServer(backend: LocalBackend): Promise<void> {
   const server = createMCPServer(backend);
 
-  // Sentinel-protected stdout. Tagged transport writes (those wrapped in
-  // withMcpWrite by compatible-stdio-transport.send) pass straight through
-  // to the real stdout reference captured at module load. Untagged writes
-  // (anything that calls process.stdout.write outside the transport — stray
-  // console.log, dependency banner, dotenv debug, etc.) get redirected to
-  // stderr with a [mcp:stdout-redirect] prefix so the MCP JSON-RPC stream
-  // stays clean by construction. See gitnexus/src/mcp/stdio-context.ts.
+  // Sentinel-protected stdout. Two layers of defense:
+  //
+  //   1. Global: process.stdout.write is replaced with sentinel.write at
+  //      MCP startup, AND registered as the "active" handler in
+  //      pool-adapter so silenceStdout/restoreStdout cycles preserve it
+  //      instead of unwinding to the raw realStdoutWrite. Direct
+  //      process.stdout.write calls from anywhere — console.log,
+  //      dependency banners, dotenv debug — go through the sentinel.
+  //
+  //   2. Transport: the existing _safeStdout Proxy is kept as a
+  //      belt-and-suspenders gate so the transport's writes always
+  //      reach sentinel.write even if some other module re-replaces
+  //      process.stdout.write. Tagged transport writes (those wrapped
+  //      in withMcpWrite by compatible-stdio-transport.send) pass
+  //      through to the captured realStdoutWrite; untagged writes
+  //      reaching the Proxy or process.stdout get redirected to stderr
+  //      with a [mcp:stdout-redirect] prefix. See stdio-context.ts.
   const sentinel = createStdoutSentinel({ realStdoutWrite, realStderrWrite });
+  // eslint-disable-next-line no-restricted-syntax -- installing the global sentinel is the API contract
+  process.stdout.write = sentinel.write;
+  setActiveStdoutWrite(sentinel.write);
   const _safeStdout = new Proxy(process.stdout, {
     get(target, prop, receiver) {
       if (prop === 'write') return sentinel.write;

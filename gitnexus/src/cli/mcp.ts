@@ -11,17 +11,10 @@ import { LocalBackend } from '../mcp/local/local-backend.js';
 import { warnMissingOptionalGrammars } from './optional-grammars.js';
 
 export const mcpCommand = async () => {
-  // Prevent unhandled errors from crashing the MCP server process.
-  // LadybugDB lock conflicts and transient errors should degrade gracefully.
-  process.on('uncaughtException', (err) => {
-    console.error(`GitNexus MCP: uncaught exception — ${err.message}`);
-    // Process is in an undefined state after uncaughtException — exit after flushing
-    setTimeout(() => process.exit(1), 100);
-  });
-  process.on('unhandledRejection', (reason) => {
-    const msg = reason instanceof Error ? reason.message : String(reason);
-    console.error(`GitNexus MCP: unhandled rejection — ${msg}`);
-  });
+  // uncaughtException/unhandledRejection handlers are owned by
+  // startMCPServer (gitnexus/src/mcp/server.ts) so the server's shutdown
+  // path runs cleanly with full stack traces. Registering duplicates here
+  // would only produce noisy double-logging on the same exception.
 
   // Surface missing optional grammars at startup so users learn why
   // .dart/.proto files won't be parsed instead of silently getting a

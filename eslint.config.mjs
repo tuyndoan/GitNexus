@@ -79,6 +79,7 @@ export default [
       'gitnexus/src/mcp/**/*.ts',
       'gitnexus/src/core/lbug/**/*.ts',
       'gitnexus/src/core/embeddings/**/*.ts',
+      'gitnexus/src/core/tree-sitter/**/*.ts',
       'gitnexus/src/cli/mcp.ts',
     ],
     rules: {
@@ -96,6 +97,18 @@ export default [
             "CallExpression[callee.type='MemberExpression'][callee.object.type='MemberExpression'][callee.object.object.name='process'][callee.object.property.name='stdout'][callee.property.name='write']",
           message:
             'Direct process.stdout.write is forbidden in MCP-reachable code. Route diagnostics through console.error or process.stderr.write — the MCP stdio transport owns stdout for JSON-RPC frames.',
+        },
+        {
+          selector:
+            "VariableDeclarator > ObjectPattern > Property[key.name='write'].properties:has(MemberExpression[object.name='process'][property.name='stdout'])",
+          message:
+            'Destructuring write off process.stdout is forbidden in MCP-reachable code — bypasses the sentinel. Use process.stderr.write for diagnostics.',
+        },
+        {
+          selector:
+            "VariableDeclarator[init.type='MemberExpression'][init.object.name='process'][init.property.name='stdout'] > ObjectPattern",
+          message:
+            'Destructuring process.stdout is forbidden in MCP-reachable code — bypasses the sentinel. Use process.stderr.write for diagnostics.',
         },
       ],
     },

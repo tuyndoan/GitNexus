@@ -89,6 +89,28 @@ let idleTimer: ReturnType<typeof setInterval> | null = null;
 export const realStdoutWrite = process.stdout.write.bind(process.stdout);
 export const realStderrWrite = process.stderr.write.bind(process.stderr);
 let stdoutSilenceCount = 0;
+
+/**
+ * The function `restoreStdout` (and the watchdog) should restore *to*
+ * when un-silencing. Defaults to the captured real write. The MCP server
+ * registers the stdout sentinel here at startMCPServer so silenceStdout
+ * cycles preserve the sentinel — without this, every restore would bypass
+ * the sentinel and leave any stray write going to real stdout uncaught.
+ */
+type StdoutWrite = typeof process.stdout.write;
+let activeStdoutWrite: StdoutWrite = realStdoutWrite;
+
+/**
+ * Register a wrapper (e.g. the MCP sentinel) as the active stdout write.
+ * silenceStdout/restoreStdout cycles will preserve the wrapper instead of
+ * unwinding to the raw realStdoutWrite. Returns the previous value so
+ * callers can chain or restore.
+ */
+export function setActiveStdoutWrite(fn: StdoutWrite): StdoutWrite {
+  const prev = activeStdoutWrite;
+  activeStdoutWrite = fn;
+  return prev;
+}
 /** True while pre-warming connections — prevents watchdog from prematurely restoring stdout */
 let preWarmActive = false;
 
@@ -218,8 +240,8 @@ export function silenceStdout(): void {
 export function restoreStdout(): void {
   if (--stdoutSilenceCount <= 0) {
     stdoutSilenceCount = 0;
-    // eslint-disable-next-line no-restricted-syntax -- restoring the captured real write is the silencing API contract
-    process.stdout.write = realStdoutWrite;
+    // eslint-disable-next-line no-restricted-syntax -- restoring the active stdout-write handler is the silencing API contract
+    process.stdout.write = activeStdoutWrite;
   }
 }
 
@@ -231,7 +253,7 @@ setInterval(() => {
   if (stdoutSilenceCount > 0 && !preWarmActive && activeQueryCount === 0) {
     stdoutSilenceCount = 0;
     // eslint-disable-next-line no-restricted-syntax -- watchdog recovery for stuck silencing
-    process.stdout.write = realStdoutWrite;
+    process.stdout.write = activeStdoutWrite;
   }
 }, 1000).unref();
 

@@ -28,7 +28,12 @@ const execFileAsync = promisify(execFile);
 // the user upgrades). Static configs and READMEs intentionally use
 // `gitnexus@latest` since they're quickstart docs, not persisted state.
 const _require = createRequire(import.meta.url);
-const _pkg = _require('../../package.json') as { version: string };
+const _pkg = _require('../../package.json') as { version?: unknown };
+if (typeof _pkg.version !== 'string' || !_pkg.version) {
+  throw new Error(
+    'gitnexus/package.json#version is missing or not a string — cannot generate MCP fallback config.',
+  );
+}
 const NPX_REF = `gitnexus@${_pkg.version}`;
 
 interface SetupResult {

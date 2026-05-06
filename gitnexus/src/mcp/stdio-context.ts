@@ -69,7 +69,28 @@ function chunkToBuffer(chunk: any): Buffer {
   if (chunk === undefined || chunk === null) return Buffer.alloc(0);
   if (Buffer.isBuffer(chunk)) return chunk;
   if (typeof chunk === 'string') return Buffer.from(chunk, 'utf8');
+  // Plain Uint8Array (e.g. from a TypedArray-using producer): copy bytes
+  // verbatim instead of falling through to String(chunk), which produces
+  // garbage like "1,2,3,...".
+  if (chunk instanceof Uint8Array) return Buffer.from(chunk);
   return Buffer.from(String(chunk), 'utf8');
+}
+
+/**
+ * Node Writable.write supports overloads:
+ *   write(chunk, cb?)
+ *   write(chunk, encoding, cb?)
+ * The last argument, when it's a function, is the completion callback the
+ * caller expects to be invoked once the chunk is processed. The Writable
+ * contract requires we call it; silently swallowing it can wedge writers
+ * that wait for it (e.g. ones using util.promisify(stream.write)).
+ */
+function extractCallback(rest: any[]): ((err?: Error | null) => void) | undefined {
+  for (let i = rest.length - 1; i >= 0; i -= 1) {
+    if (typeof rest[i] === 'function') return rest[i] as (err?: Error | null) => void;
+    if (rest[i] !== undefined) break;
+  }
+  return undefined;
 }
 
 export function createStdoutSentinel(opts: SentinelOptions): Sentinel {
@@ -91,22 +112,28 @@ export function createStdoutSentinel(opts: SentinelOptions): Sentinel {
       stderr(STARTUP_WARNING);
     }
 
-    if (redirected >= maxRedirects) {
+    if (redirected < maxRedirects) {
+      redirected += 1;
+      const buf = chunkToBuffer(chunk);
+      const truncated = buf.length > maxBytes ? buf.subarray(0, maxBytes) : buf;
+
+      stderr(REDIRECT_PREFIX);
+      if (truncated.length > 0) stderr(truncated);
+      if (buf.length > maxBytes) {
+        stderr(` (+${buf.length - maxBytes} bytes truncated)`);
+      }
+      if (truncated.length === 0 || truncated[truncated.length - 1] !== 0x0a) {
+        stderr('\n');
+      }
+    } else {
       suppressed += 1;
-      return true;
     }
 
-    redirected += 1;
-    const buf = chunkToBuffer(chunk);
-    const truncated = buf.length > maxBytes ? buf.subarray(0, maxBytes) : buf;
-
-    stderr(REDIRECT_PREFIX);
-    if (truncated.length > 0) stderr(truncated);
-    if (buf.length > maxBytes) {
-      stderr(` (+${buf.length - maxBytes} bytes truncated)`);
-    }
-    if (truncated.length === 0 || truncated[truncated.length - 1] !== 0x0a) {
-      stderr('\n');
+    // Honor the Writable.write callback contract — fire async to match
+    // Node's "next-tick" semantics so callers never observe sync reentry.
+    const cb = extractCallback(rest);
+    if (cb) {
+      process.nextTick(() => cb(null));
     }
     return true;
   };

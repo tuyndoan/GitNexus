@@ -35,19 +35,30 @@ export interface MissingGrammar {
   extensions: string[];
 }
 
+// Memoize the probe result — actually requiring the grammar loads its
+// native binding (via node-gyp-build), which we don't need to do twice.
+let _detectionCache: MissingGrammar[] | null = null;
+
 /**
  * Returns the list of optional grammars whose native binding cannot be
- * loaded. Cheap: just `require.resolve`, no actual import.
+ * loaded. Actually `require()`s the package — `require.resolve` would
+ * locate the entry path even when the `.node` binding is absent (the
+ * `file:` package directory is installed regardless of postinstall
+ * outcome), giving false negatives for the exact users we want to warn:
+ * those who installed with `GITNEXUS_SKIP_OPTIONAL_GRAMMARS=1` or whose
+ * native rebuild soft-failed for missing toolchain.
  */
 export function detectMissingOptionalGrammars(): MissingGrammar[] {
+  if (_detectionCache) return _detectionCache;
   const missing: MissingGrammar[] = [];
   for (const g of OPTIONAL_GRAMMARS) {
     try {
-      _require.resolve(g.pkg);
+      _require(g.pkg);
     } catch {
       missing.push({ name: g.name, extensions: g.extensions });
     }
   }
+  _detectionCache = missing;
   return missing;
 }
 
