@@ -138,6 +138,8 @@ Built by the community — not officially maintained, but worth checking out.
 
 If you prefer manual configuration:
 
+> **Recommended for fastest startup:** install gitnexus globally (`npm i -g gitnexus`) and run `gitnexus setup` — this writes an absolute-path MCP config that bypasses `npx` entirely. The pinned-`npx` snippets below are a quickstart fallback; on a cold cache the `npx` install can exceed Claude Code's `MCP_TIMEOUT` default (~30s).
+
 **Claude Code** (full support — MCP + skills + hooks):
 
 ```bash
