@@ -24,6 +24,11 @@
  */
 
 import { AsyncLocalStorage } from 'node:async_hooks';
+import {
+  realStdoutWrite,
+  realStderrWrite,
+  setActiveStdoutWrite,
+} from '../core/lbug/pool-adapter.js';
 
 interface McpWriteContext {
   mcp: true;
@@ -39,7 +44,7 @@ export function isMcpWrite(): boolean {
   return store.getStore()?.mcp === true;
 }
 
-type WriteFn = (chunk: any, ...rest: any[]) => boolean;
+type WriteFn = typeof process.stdout.write;
 
 export interface SentinelOptions {
   realStdoutWrite: WriteFn;
@@ -77,20 +82,14 @@ function chunkToBuffer(chunk: any): Buffer {
 }
 
 /**
- * Node Writable.write supports overloads:
- *   write(chunk, cb?)
- *   write(chunk, encoding, cb?)
- * The last argument, when it's a function, is the completion callback the
- * caller expects to be invoked once the chunk is processed. The Writable
- * contract requires we call it; silently swallowing it can wedge writers
- * that wait for it (e.g. ones using util.promisify(stream.write)).
+ * Node Writable.write contract: the completion callback, when present, is
+ * always the last argument. Match exactly that — don't try to peer past
+ * earlier arguments — so future overload shapes (e.g. an options object)
+ * do not silently break callback delivery.
  */
-function extractCallback(rest: any[]): ((err?: Error | null) => void) | undefined {
-  for (let i = rest.length - 1; i >= 0; i -= 1) {
-    if (typeof rest[i] === 'function') return rest[i] as (err?: Error | null) => void;
-    if (rest[i] !== undefined) break;
-  }
-  return undefined;
+function extractCallback(rest: unknown[]): ((err?: Error | null) => void) | undefined {
+  const last = rest[rest.length - 1];
+  return typeof last === 'function' ? (last as (err?: Error | null) => void) : undefined;
 }
 
 export function createStdoutSentinel(opts: SentinelOptions): Sentinel {
@@ -148,4 +147,37 @@ export function createStdoutSentinel(opts: SentinelOptions): Sentinel {
       );
     },
   };
+}
+
+/**
+ * Install the sentinel as the global stdout interceptor — idempotent.
+ *
+ * Does three things in order:
+ *   1. Creates the sentinel from the captured `realStdoutWrite` / `realStderrWrite`.
+ *   2. Replaces `process.stdout.write` with `sentinel.write`.
+ *   3. Registers `sentinel.write` as the "active" handler in pool-adapter
+ *      so silenceStdout/restoreStdout cycles preserve the sentinel
+ *      instead of unwinding to raw stdout.
+ *
+ * Idempotent — callers may invoke it multiple times safely (cli/mcp.ts at
+ * the top of mcpCommand, and startMCPServer). The earliest caller wins;
+ * subsequent calls return the same sentinel handle. Call this BEFORE any
+ * other startup work that might emit to stdout: native module loads,
+ * `_require()`-style grammar detection, repo registry reads, embedder
+ * pipeline initialization. Anything written before the sentinel is in
+ * place reaches raw stdout uncaught.
+ *
+ * Returns the sentinel handle so the earliest caller can register
+ * `process.on('exit', sentinel.flushSummary)`.
+ */
+let _installedSentinel: Sentinel | null = null;
+
+export function installGlobalStdoutSentinel(): Sentinel {
+  if (_installedSentinel) return _installedSentinel;
+  const sentinel = createStdoutSentinel({ realStdoutWrite, realStderrWrite });
+  // eslint-disable-next-line no-restricted-syntax -- installing the global sentinel is the API contract
+  process.stdout.write = sentinel.write;
+  setActiveStdoutWrite(sentinel.write);
+  _installedSentinel = sentinel;
+  return sentinel;
 }

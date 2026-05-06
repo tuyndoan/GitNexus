@@ -35,10 +35,6 @@ export interface MissingGrammar {
   extensions: string[];
 }
 
-// Memoize the probe result — actually requiring the grammar loads its
-// native binding (via node-gyp-build), which we don't need to do twice.
-let _detectionCache: MissingGrammar[] | null = null;
-
 /**
  * Returns the list of optional grammars whose native binding cannot be
  * loaded. Actually `require()`s the package — `require.resolve` would
@@ -47,18 +43,36 @@ let _detectionCache: MissingGrammar[] | null = null;
  * outcome), giving false negatives for the exact users we want to warn:
  * those who installed with `GITNEXUS_SKIP_OPTIONAL_GRAMMARS=1` or whose
  * native rebuild soft-failed for missing toolchain.
+ *
+ * Node's module cache memoizes `require()` for us — calling this multiple
+ * times is cheap. The catch distinguishes "missing" (MODULE_NOT_FOUND or
+ * the typical node-gyp-build "could not find any binding" pattern) from
+ * "broken" (SyntaxError, EACCES, native crash). Broken bindings surface a
+ * separate stderr line so users get an actionable message instead of a
+ * misleading "reinstall" hint.
  */
 export function detectMissingOptionalGrammars(): MissingGrammar[] {
-  if (_detectionCache) return _detectionCache;
   const missing: MissingGrammar[] = [];
   for (const g of OPTIONAL_GRAMMARS) {
     try {
       _require(g.pkg);
-    } catch {
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException | undefined)?.code;
+      const msg = err instanceof Error ? err.message : String(err);
+      const looksMissing =
+        code === 'MODULE_NOT_FOUND' ||
+        code === 'ERR_MODULE_NOT_FOUND' ||
+        /could not find|no native build|prebuilds/i.test(msg);
+      if (!looksMissing) {
+        // Present but broken — surface so the user doesn't get a misleading
+        // "reinstall" recovery message that wouldn't actually help.
+        console.error(
+          `GitNexus: optional grammar "${g.name}" is installed but failed to load (${msg.slice(0, 200)}). ${g.extensions.join('/')} files will not be parsed.`,
+        );
+      }
       missing.push({ name: g.name, extensions: g.extensions });
     }
   }
-  _detectionCache = missing;
   return missing;
 }
 

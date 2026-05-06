@@ -8,9 +8,21 @@
 
 import { startMCPServer } from '../mcp/server.js';
 import { LocalBackend } from '../mcp/local/local-backend.js';
+import { installGlobalStdoutSentinel } from '../mcp/stdio-context.js';
 import { warnMissingOptionalGrammars } from './optional-grammars.js';
 
 export const mcpCommand = async () => {
+  // Install the global stdout sentinel as the very first thing — before
+  // ANY other startup work that might emit to stdout. detectMissingOptionalGrammars
+  // (called from warnMissingOptionalGrammars below) actually require()s
+  // each native grammar binding; node-gyp-build / native init banners
+  // would otherwise reach raw stdout in the pre-sentinel window and
+  // corrupt the JSON-RPC frame stream — exactly the failure mode this
+  // PR fixes. backend.init / refreshRepos can also emit if a downstream
+  // module is misbehaving. Idempotent — startMCPServer calls it again
+  // as a safety net.
+  installGlobalStdoutSentinel();
+
   // uncaughtException/unhandledRejection handlers are owned by
   // startMCPServer (gitnexus/src/mcp/server.ts) so the server's shutdown
   // path runs cleanly with full stack traces. Registering duplicates here
