@@ -24,7 +24,8 @@ import {
   GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { GITNEXUS_TOOLS } from './tools.js';
-import { realStdoutWrite } from './core/lbug-adapter.js';
+import { realStdoutWrite, realStderrWrite } from './core/lbug-adapter.js';
+import { createStdoutSentinel } from './stdio-context.js';
 import type { LocalBackend } from './local/local-backend.js';
 import { getResourceDefinitions, getResourceTemplates, readResource } from './resources.js';
 
@@ -287,18 +288,27 @@ Follow these steps:
 export async function startMCPServer(backend: LocalBackend): Promise<void> {
   const server = createMCPServer(backend);
 
-  // Use the shared stdout reference captured at module-load time by the
-  // lbug-adapter.  Avoids divergence if anything patches stdout between
-  // module load and server start.
+  // Sentinel-protected stdout. Tagged transport writes (those wrapped in
+  // withMcpWrite by compatible-stdio-transport.send) pass straight through
+  // to the real stdout reference captured at module load. Untagged writes
+  // (anything that calls process.stdout.write outside the transport — stray
+  // console.log, dependency banner, dotenv debug, etc.) get redirected to
+  // stderr with a [mcp:stdout-redirect] prefix so the MCP JSON-RPC stream
+  // stays clean by construction. See gitnexus/src/mcp/stdio-context.ts.
+  const sentinel = createStdoutSentinel({ realStdoutWrite, realStderrWrite });
   const _safeStdout = new Proxy(process.stdout, {
     get(target, prop, receiver) {
-      if (prop === 'write') return realStdoutWrite;
+      if (prop === 'write') return sentinel.write;
       const val = Reflect.get(target, prop, receiver);
       return typeof val === 'function' ? val.bind(target) : val;
     },
   });
   const transport = new CompatibleStdioServerTransport(process.stdin, _safeStdout);
   await server.connect(transport);
+
+  // Surface the redirect counter on shutdown so users see the volume of
+  // stray writes even when individual payloads were truncated/suppressed.
+  process.on('exit', () => sentinel.flushSummary());
 
   // Graceful shutdown helper
   let shuttingDown = false;
